@@ -1,5 +1,5 @@
-import CreateEvent from '../components/CreateEvent.jsx';
-import Agenda from '../components/Agenda.jsx';
+import CreateEvent from '../components/CreateEvent/CreateEvent.jsx';
+import Agenda from '../components/Agenda/Agenda.jsx';
 
 function Connected() {
   return (
