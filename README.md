@@ -1,24 +1,3 @@
-<!-- # React + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project. -->
-
-
-
-
-
-
-
-
-
 # Carely 🏥
 
 ![Carely Logo](https://i.imgur.com/ko0MNnd.jpeg)
@@ -31,6 +10,7 @@ Every clinic, dentist, hospital, and service provider struggles with the same pr
 Managing patient check-ins and appointments smoothly.
 
 Carely solves this by giving patients, receptionists, providers, and admins the tools they need in a single app.
+
 	1•	Beginner-Friendly Scope: CRUD (Create, Read, Update, Delete) – easy to build step by step.
 
 	2•	Perfect for Teamwork: 4 modules for 4 members:
@@ -132,36 +112,41 @@ Admin
 ```
 USER  {
 	_id: ObjectId,
-	username: String (required),
+	name: String (required),
+	email: String (required),
 	password: String (required),
-	role: { type: String, enum: ["patient","admin","provider","reception"], required: true },
-	appointments: [appointmentSchema]
+	role: { type: String, enum: ["admin","provider","reception"], required: true },
 }
 
 
 PATIENT {
 	_id: ObjectId,
-	password: String (required),
-	DOB: String (required),
-	phone: Number (required)
+	name: String (required),
+	DOB: Date (required),
+	email: String (required),
+	phone: String (required),
+	notes: String,
+	allergies: [String],
+	medicatons: [String]
+
 }
 
 
 APPOINTMENT {
 	_id: ObjectId,
-	name: String (required),
-	DOB: String (required),
-	phone: String (required),
-	email: String (required),
-	date: String (required),
-	time: String (required),
-	nameOfProvider: String (required),
-	status: { type: String, enum: ["scheduled","checkIn","completed"], required: true }
+	date: Date (required),
+	startTime: Time (required),
+	endTime: Time (required),
+	providerId: ObjectId (ref: "USER", required),
+	patientId: ObjectId (ref: "PATIENT", required),
+	createdById: ObjectId (ref: "USER", required),
+	status: { type: String, enum: ["scheduled","checkIn","completed", "canceled", "noShow"], required: true }
 }
 ```
 
 
 ## Routes
+
 |Action	|Route	                                         |HTTP Verb
 |-------|------------------------------------------------|----------
 |Index	|/users/:userId/appointments	                 |GET
@@ -173,6 +158,17 @@ APPOINTMENT {
 |Delete	|/users/:userId/appointments/:appointmentId	     |DELETE
 
 
+## Patients Routes**
+
+| Action | Route                           | HTTP Verb |
+|------- |---------------------------------|-----------|
+| Index  | /patients                       | GET       |
+| New    | /patients/new                   | GET       |
+| Create | /patients                       | POST      |
+| Show   | /patients/:patientId            | GET       |
+| Edit   | /patients/:patientId/edit       | GET       |
+| Update | /patients/:patientId            | PUT       |
+| Delete | /patients/:patientId            | DELETE    |
 
 ## Tech Stack 
 	•	Frontend: React + CSS
@@ -205,9 +201,15 @@ npm run client
 
 
 ![Patient Check-in](https://i.imgur.com/dEt9eOZ.png)
-![Kiosk ](https://i.imgur.com/8cJUMQe.png)
-![Patient Check-in Dashboard](https://i.imgur.com/qaQcpoM.png)
-![Appointment Scheduling](https://i.imgur.com/X7KY6Kf.png)
+Patient Kiosk — simple check-in by name + DOB/phone.
 
+![Kiosk ](https://i.imgur.com/8cJUMQe.png)
+ADDED caption:** Public-facing kiosk screen for quick arrivals.
+
+![Patient Check-in Dashboard](https://i.imgur.com/qaQcpoM.png)
+ADDED caption:** Reception dashboard — today’s appointments & check-in status.
+
+![Appointment Scheduling](https://i.imgur.com/X7KY6Kf.png)
+Scheduling view — create, reschedule, or cancel appointments.
 
 Trello Link: https://trello.com/b/mub1Eztu/carely
