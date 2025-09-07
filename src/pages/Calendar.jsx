@@ -1,368 +1,344 @@
-import { useState, useRef, useContext } from "react";
+import { useEffect, useRef, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 
 import ProviderPicker from "../components/ProviderPicker/ProviderPicker.jsx";
-import {
-  getEventsRange,
-  deleteEvent,
-  updateEvent,
-} from "../services/gcalService";
-import { UserContext } from "../contexts/UserContext";
+import * as gcal from "../services/gcalService";
 
-function toRFC3339Local(dt) {
-  const offMin = -dt.getTimezoneOffset();
-  const sign = offMin >= 0 ? "+" : "-";
-  const abs = Math.abs(offMin);
-  const offH = String(Math.floor(abs / 60)).padStart(2, "0");
-  const offM = String(abs % 60).padStart(2, "0");
-  const yyyy = dt.getFullYear();
-  const mon = String(dt.getMonth() + 1).padStart(2, "0");
-  const day = String(dt.getDate()).padStart(2, "0");
-  const H = String(dt.getHours()).padStart(2, "0");
-  const M = String(dt.getMinutes()).padStart(2, "0");
-  return `${yyyy}-${mon}-${day}T${H}:${M}:00${sign}${offH}:${offM}`;
+const TZ = "America/New_York";
+
+const pad = (n) => String(n).padStart(2, "0");
+function toLocalRFC3339NoZ(d) {
+  // JS Date -> "YYYY-MM-DDTHH:MM:SS" (no Z)
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
+    d.getHours()
+  )}:${pad(d.getMinutes())}:00`;
+}
+function toDateStr(d) {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+function toTimeStr(d) {
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function dateFromLocalInputs(dateStr, timeStr) {
-  if (!dateStr || !timeStr) return null;
-  const [y, m, d] = dateStr.split("-").map((n) => parseInt(n, 10));
-  const [hh, mm] = timeStr.split(":").map((n) => parseInt(n, 10));
-  if ([y, m, d, hh, mm].some((x) => Number.isNaN(x))) return null;
-  return new Date(y, m - 1, d, hh, mm, 0, 0);
+function mapGoogleToFC(googleEvent) {
+  const start = googleEvent.start?.dateTime || googleEvent.start?.date || null;
+  const end = googleEvent.end?.dateTime || googleEvent.end?.date || null;
+  const allDay = Boolean(
+    googleEvent.start?.date && !googleEvent.start?.dateTime
+  );
+  return {
+    id: googleEvent.id,
+    title: googleEvent.summary || "(no title)",
+    start,
+    end,
+    allDay,
+    extendedProps: {
+      description: googleEvent.description || "",
+      location: googleEvent.location || "",
+    },
+  };
 }
 
-function CalendarPage() {
-  const { user } = useContext(UserContext);
-
+const CalendarPage = () => {
   const [providerId, setProviderId] = useState(
     () => localStorage.getItem("providerId") || ""
   );
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState("");
-
-  const [selected, setSelected] = useState(null);
-  const [editTitle, setEditTitle] = useState("");
-  const [actionMsg, setActionMsg] = useState("");
-  const [editTimes, setEditTimes] = useState(false);
-  const [startDateStr, setStartDateStr] = useState("");
-  const [startTimeStr, setStartTimeStr] = useState("");
-  const [endDateStr, setEndDateStr] = useState("");
-  const [endTimeStr, setEndTimeStr] = useState("");
-  const [origStart, setOrigStart] = useState(null);
-  const [origEnd, setOrigEnd] = useState(null);
-
   const calRef = useRef(null);
 
-  const effectiveProviderId = user?.role === "provider" ? user._id : providerId;
+  // Edit panel state
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [editId, setEditId] = useState("");
+  const [form, setForm] = useState({
+    summary: "",
+    description: "",
+    location: "",
+    date: "",
+    start: "",
+    end: "",
+    changeTime: false, // only send start/end when true
+  });
 
-  const saveProvider = (id) => {
-    setProviderId(id);
-    try {
-      if (id) localStorage.setItem("providerId", id);
-      else localStorage.removeItem("providerId");
-    } catch {}
+  // persist provider selection (same behavior as /connected)
+  useEffect(() => {
+    if (providerId) localStorage.setItem("providerId", providerId);
+    else localStorage.removeItem("providerId");
+  }, [providerId]);
+
+  function refetchCalendar() {
     const api = calRef.current?.getApi?.();
-    if (api?.view) loadRange(api.view.currentStart, api.view.currentEnd);
-    closeInspector();
-  };
+    if (api) api.refetchEvents();
+  }
 
-  async function loadRange(start, end) {
-    setErr("");
-    setLoading(true);
+  async function fetchGoogleRange(info, successCallback, failureCallback) {
     try {
-      if (!effectiveProviderId) {
-        setEvents([]);
-        setLoading(false);
+      if (!providerId) {
+        successCallback([]); // do nothing until provider chosen
         return;
       }
-      const data = await getEventsRange({
-        timeMin: start.toISOString(),
-        timeMax: end.toISOString(),
-        providerId: effectiveProviderId,
+      const data = await gcal.getEventsRange({
+        timeMin: info.start.toISOString(),
+        timeMax: info.end.toISOString(),
+        providerId,
       });
-      const items = (data.events || []).map((ev) => ({
-        id: ev.id,
-        title: ev.summary || "(no title)",
-        start: ev.start?.dateTime || ev.start?.date,
-        end:
-          ev.end?.dateTime ||
-          ev.end?.date ||
-          ev.start?.dateTime ||
-          ev.start?.date,
-        extendedProps: {
-          description: ev.description || "",
-          attendees: Array.isArray(ev.attendees)
-            ? ev.attendees.map((a) => ({ email: a.email }))
-            : [],
-          htmlLink: ev.htmlLink || "",
-        },
-      }));
-      setEvents(items);
-    } catch (e) {
-      setErr(e.message || "Failed to load events.");
-      setEvents([]);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function initInspectorFromEvent(fcEvent) {
-    const ev = fcEvent;
-    const start = ev.start;
-    const end = ev.end || ev.start;
-    setSelected({
-      id: ev.id,
-      title: ev.title,
-      description: ev.extendedProps?.description || "",
-      attendees: Array.isArray(ev.extendedProps?.attendees)
-        ? ev.extendedProps.attendees
-        : [],
-      start,
-      end,
-      htmlLink: ev.extendedProps?.htmlLink || "",
-    });
-    setEditTitle(ev.title || "");
-    setOrigStart(start ? new Date(start.getTime()) : null);
-    setOrigEnd(end ? new Date(end.getTime()) : null);
-
-    const sd = start
-      ? `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(
-          2,
-          "0"
-        )}-${String(start.getDate()).padStart(2, "0")}`
-      : "";
-    const st = start
-      ? `${String(start.getHours()).padStart(2, "0")}:${String(
-          start.getMinutes()
-        ).padStart(2, "0")}`
-      : "";
-    const ed = end
-      ? `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(
-          2,
-          "0"
-        )}-${String(end.getDate()).padStart(2, "0")}`
-      : sd;
-    const et = end
-      ? `${String(end.getHours()).padStart(2, "0")}:${String(
-          end.getMinutes()
-        ).padStart(2, "0")}`
-      : st;
-
-    setStartDateStr(sd);
-    setStartTimeStr(st);
-    setEndDateStr(ed);
-    setEndTimeStr(et);
-    setEditTimes(false);
-    setActionMsg("");
-  }
-
-  function onEventClick(info) {
-    info.jsEvent.preventDefault();
-    initInspectorFromEvent(info.event);
-  }
-
-  function eventDidMount(arg) {
-    const el = arg.el;
-    el.style.cursor = "pointer";
-    el.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      initInspectorFromEvent(arg.event);
-    });
-  }
-
-  function closeInspector() {
-    setSelected(null);
-    setEditTitle("");
-    setActionMsg("");
-    setEditTimes(false);
-  }
-
-  async function onDelete() {
-    if (!selected) return;
-    if (!window.confirm("Delete this event?")) return;
-    setActionMsg("");
-    try {
-      await deleteEvent(effectiveProviderId, selected.id);
-      await loadRange(
-        calRef.current.getApi().view.currentStart,
-        calRef.current.getApi().view.currentEnd
-      );
-      closeInspector(); // auto-close on success
-    } catch (e) {
-      setActionMsg(e.message || "Failed to delete.");
-    }
-  }
-
-  async function onSaveInspector() {
-    if (!selected) return;
-
-    const payload = {
-      summary: (editTitle || "").trim(),
-      description: (selected.description || "").trim(),
-      attendeeEmails: (selected.attendees || []).map((a) => a.email),
-    };
-
-    if (editTimes) {
-      const newStart = dateFromLocalInputs(startDateStr, startTimeStr);
-      const newEnd = dateFromLocalInputs(endDateStr, endTimeStr);
-      if (!newStart || !newEnd) {
-        setActionMsg("Please enter valid start/end date and time.");
-        return;
-      }
-      if (newEnd <= newStart) {
-        setActionMsg("End must be after start.");
-        return;
-      }
-      const changedStart =
-        !origStart || newStart.getTime() !== origStart.getTime();
-      const changedEnd = !origEnd || newEnd.getTime() !== origEnd.getTime();
-      if (changedStart || changedEnd) {
-        payload.startISO = toRFC3339Local(newStart);
-        payload.endISO = toRFC3339Local(newEnd);
-      }
-    }
-
-    try {
-      await updateEvent(effectiveProviderId, selected.id, payload);
-      await loadRange(
-        calRef.current.getApi().view.currentStart,
-        calRef.current.getApi().view.currentEnd
-      );
-      closeInspector(); // auto-close on success
-    } catch (e) {
-      setActionMsg(e.message || "Failed to update.");
+      const items = Array.isArray(data.items) ? data.items : [];
+      successCallback(items.map(mapGoogleToFC));
+    } catch (err) {
+      failureCallback(err);
     }
   }
 
   async function onEventDropResize(changeInfo) {
     const ev = changeInfo.event;
     try {
-      const startISO = toRFC3339Local(ev.start);
-      const endISO = ev.end ? toRFC3339Local(ev.end) : startISO;
-      await updateEvent(effectiveProviderId, ev.id, { startISO, endISO });
-      if (selected?.id === ev.id) {
-        initInspectorFromEvent(ev);
-      }
+      if (!providerId) throw new Error("Pick a provider first.");
+      setBusy(true);
+      await gcal.updateEvent(providerId, ev.id, {
+        start: { dateTime: toLocalRFC3339NoZ(ev.start), timeZone: TZ },
+        end: ev.end
+          ? { dateTime: toLocalRFC3339NoZ(ev.end), timeZone: TZ }
+          : undefined,
+      });
+      setBusy(false);
     } catch (e) {
+      setBusy(false);
       changeInfo.revert();
-      setActionMsg(e.message || "Failed to reschedule.");
+      alert(e.message || "Failed to update event");
     }
   }
 
+  function onEventClick(clickInfo) {
+    // OPEN EDIT PANEL (no more delete on click)
+    const ev = clickInfo.event;
+    const start = ev.start ? new Date(ev.start) : null;
+    const end = ev.end ? new Date(ev.end) : start;
+
+    setEditId(ev.id);
+    setForm({
+      summary: ev.title || "",
+      description: ev.extendedProps?.description || "",
+      location: ev.extendedProps?.location || "",
+      date: start ? toDateStr(start) : "",
+      start: start ? toTimeStr(start) : "",
+      end: end ? toTimeStr(end) : "",
+      changeTime: false, // default OFF → only title/notes/location unless opted in
+    });
+    setPanelOpen(true);
+  }
+
+  async function handleSave() {
+    if (!providerId || !editId) return;
+    try {
+      setBusy(true);
+
+      // Build partial update body (only what user allows)
+      const updates = {
+        summary: form.summary,
+        description: form.description,
+        location: form.location,
+      };
+      if (form.changeTime) {
+        updates.start = {
+          dateTime: `${form.date}T${form.start}:00`,
+          timeZone: TZ,
+        };
+        updates.end = { dateTime: `${form.date}T${form.end}:00`, timeZone: TZ };
+      }
+
+      await gcal.updateEvent(providerId, editId, updates);
+      setBusy(false);
+      setPanelOpen(false);
+      refetchCalendar();
+    } catch (e) {
+      setBusy(false);
+      alert(e.message || "Failed to save");
+    }
+  }
+
+  async function handleDelete() {
+    if (!providerId || !editId) return;
+    const ok = confirm(`Delete "${form.summary || "(no title)"}"?`);
+    if (!ok) return;
+    try {
+      setBusy(true);
+      await gcal.deleteEvent(providerId, editId);
+      setBusy(false);
+      setPanelOpen(false);
+      refetchCalendar();
+    } catch (e) {
+      setBusy(false);
+      alert(e.message || "Failed to delete");
+    }
+  }
+
+  // refetch when provider changes
+  useEffect(() => {
+    refetchCalendar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [providerId]);
+
   return (
-    <div style={{ padding: 16 }}>
+    <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gap: 12 }}>
       <h2>Calendar</h2>
 
-      {user?.role !== "provider" && (
-        <div style={{ marginBottom: 8 }}>
-          <ProviderPicker value={providerId} onChange={saveProvider} />
-        </div>
-      )}
-
-      {err && <p style={{ color: "#b00020" }}>{err}</p>}
+      <ProviderPicker value={providerId} onChange={setProviderId} />
 
       <FullCalendar
         ref={calRef}
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
         initialView="timeGridWeek"
-        height="70vh"
         headerToolbar={{
           left: "prev,next today",
           center: "title",
           right: "dayGridMonth,timeGridWeek,timeGridDay",
         }}
-        editable={true}
-        events={events}
-        datesSet={(arg) => loadRange(arg.start, arg.end)}
-        eventClick={onEventClick}
-        eventDidMount={eventDidMount}
+        editable={true} // drag/resize time edits
+        selectable={false}
+        eventOverlap={true}
+        events={fetchGoogleRange} // provider-scoped range
         eventDrop={onEventDropResize}
         eventResize={onEventDropResize}
+        eventClick={onEventClick} // open edit panel (no auto-delete)
+        height="auto"
       />
 
-      {selected && (
-        <div style={{ marginTop: 12, border: "1px solid #ddd", padding: 12 }}>
-          <h3>Edit Event</h3>
-          <label>
-            Title{" "}
-            <input
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-            />
-          </label>
-          <label>
-            Description{" "}
-            <input
-              value={selected.description}
-              onChange={(e) =>
-                setSelected({ ...selected, description: e.target.value })
-              }
-            />
-          </label>
-          <label>
-            Attendees{" "}
-            <input
-              value={(selected.attendees || []).map((a) => a.email).join(", ")}
-              onChange={(e) =>
-                setSelected({
-                  ...selected,
-                  attendees: e.target.value
-                    .split(",")
-                    .map((s) => ({ email: s.trim() }))
-                    .filter((a) => a.email),
-                })
-              }
-            />
-          </label>
-          <div>
+      {panelOpen && (
+        <div
+          style={{
+            border: "1px solid #ddd",
+            borderRadius: 8,
+            padding: 12,
+            background: "#111",
+            color: "#eee",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 12,
+            }}
+          >
+            <strong>Edit Appointment</strong>
+            <button onClick={() => setPanelOpen(false)} disabled={busy}>
+              Close
+            </button>
+          </div>
+
+          <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
             <label>
+              Title
+              <input
+                type="text"
+                value={form.summary}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, summary: e.target.value }))
+                }
+              />
+            </label>
+
+            <label>
+              Notes (optional)
+              <textarea
+                value={form.description}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, description: e.target.value }))
+                }
+              />
+            </label>
+
+            <label>
+              Location (optional)
+              <input
+                type="text"
+                value={form.location}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, location: e.target.value }))
+                }
+              />
+            </label>
+
+            <label
+              style={{ display: "inline-flex", gap: 8, alignItems: "center" }}
+            >
               <input
                 type="checkbox"
-                checked={editTimes}
-                onChange={(e) => setEditTimes(e.target.checked)}
-              />{" "}
-              Edit times
+                checked={form.changeTime}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, changeTime: e.target.checked }))
+                }
+              />
+              Change time?
             </label>
-            {editTimes && (
-              <div style={{ display: "grid", gap: 6, marginTop: 6 }}>
+
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                alignItems: "center",
+                opacity: form.changeTime ? 1 : 0.6,
+              }}
+            >
+              <label>
+                Date
                 <input
                   type="date"
-                  value={startDateStr}
-                  onChange={(e) => setStartDateStr(e.target.value)}
+                  value={form.date}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, date: e.target.value }))
+                  }
+                  disabled={!form.changeTime}
                 />
+              </label>
+              <label>
+                Start
                 <input
                   type="time"
-                  value={startTimeStr}
-                  onChange={(e) => setStartTimeStr(e.target.value)}
+                  value={form.start}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, start: e.target.value }))
+                  }
+                  disabled={!form.changeTime}
                 />
-                <input
-                  type="date"
-                  value={endDateStr}
-                  onChange={(e) => setEndDateStr(e.target.value)}
-                />
+              </label>
+              <label>
+                End
                 <input
                   type="time"
-                  value={endTimeStr}
-                  onChange={(e) => setEndTimeStr(e.target.value)}
+                  value={form.end}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, end: e.target.value }))
+                  }
+                  disabled={!form.changeTime}
                 />
-              </div>
-            )}
+              </label>
+            </div>
+
+            <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+              <button onClick={handleSave} disabled={busy}>
+                Save
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={busy}
+                style={{ color: "#fff", background: "#b00" }}
+              >
+                Delete
+              </button>
+            </div>
+
+            <div style={{ fontSize: 12, opacity: 0.8 }}>
+              Tip: you can also drag/resize the event directly on the calendar
+              to change time.
+            </div>
           </div>
-          <div style={{ marginTop: 8 }}>
-            <button onClick={onSaveInspector}>Save</button>
-            <button onClick={onDelete}>Delete</button>
-            <button onClick={closeInspector}>Close</button>
-          </div>
-          {actionMsg && <p style={{ color: "#b00020" }}>{actionMsg}</p>}
         </div>
       )}
     </div>
   );
-}
+};
 
 export default CalendarPage;
