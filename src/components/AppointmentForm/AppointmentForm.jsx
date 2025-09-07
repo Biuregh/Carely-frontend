@@ -135,3 +135,4 @@ const AppointmentForm = ({ patient }) => {
         </div>
     );
 }
+export default AppointmentForm;
