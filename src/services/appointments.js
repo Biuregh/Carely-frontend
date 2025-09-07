@@ -21,7 +21,7 @@ const availableSlots = async ({ providerId, date }) => {
 const createAppointment = async ({patiendId, providerId, date, time, type}) =>{
     return await api("/appointments",{
         method: "POST",
-        body:{ patiendId, providerId, date, time, type};
+        body:{ patiendId, providerId, date, time, type}
     })
 };
 
