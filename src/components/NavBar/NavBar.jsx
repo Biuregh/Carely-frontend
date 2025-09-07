@@ -32,6 +32,11 @@ const NavBar = () => {
           <li>
             <Link to="/calendar">Calendar</Link>
           </li>
+          {user.role === "admin" && (
+            <li>
+              <Link to="/admin/users">Admin · Users</Link>
+            </li>
+          )}
         </ul>
       ) : (
         <ul>
