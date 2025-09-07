@@ -5,7 +5,7 @@ import Home from "./pages/Home.jsx";
 import Connected from "./pages/Connected.jsx";
 import CalendarPage from "./pages/Calendar.jsx";
 import AdminUsers from "./pages/AdminUsers.jsx";
-import BootstrapAdmin from "./pages/BootstrapAdmin.jsx"; // one time use
+import BootstrapAdmin from "./pages/BootstrapAdmin.jsx";
 
 import NavBar from "./components/NavBar/NavBar";
 import SignUpForm from "./components/SignUpForm/SignUpForm";
@@ -25,6 +25,7 @@ function App() {
         <Route path="/" element={user ? <Dashboard /> : <Landing />} />
         <Route path="/home" element={<Home />} />
         <Route path="/connected" element={<Connected />} />
+        <Route path="/agenda" element={<Connected />} />
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/sign-up" element={<SignUpForm />} />
         <Route path="/sign-in" element={<SignInForm />} />
@@ -36,8 +37,7 @@ function App() {
             </RequireRole>
           }
         />
-        <Route path="/bootstrap-admin" element={<BootstrapAdmin />} />{" "}
-        {/* one time use */}
+        <Route path="/bootstrap-admin" element={<BootstrapAdmin />} />
       </Routes>
     </>
   );
