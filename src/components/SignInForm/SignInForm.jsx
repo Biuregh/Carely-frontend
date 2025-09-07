@@ -1,30 +1,35 @@
-import { useState, useContext } from 'react';
-import { useNavigate } from 'react-router';
+import { useState, useContext } from "react";
+import { useNavigate } from "react-router";
 
-import { signIn } from '../../services/authService';
+import { signIn } from "../../services/authService";
 
-import { UserContext } from '../../contexts/UserContext';
+import { UserContext } from "../../contexts/UserContext";
 
 const SignInForm = () => {
   const navigate = useNavigate();
   const { setUser } = useContext(UserContext);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const [formData, setFormData] = useState({
-    username: '',
-    password: '',
+    username: "",
+    password: "",
   });
 
   const handleChange = (evt) => {
-    setMessage('');
-    setFormData({ ...formData, [evt.target.name]: evt.target.value });
+    setMessage("");
+    const { name, value } = evt.target;
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (evt) => {
     evt.preventDefault();
     try {
-      const signedInUser = await signIn(formData);
+      const payload = {
+        username: formData.username.trim(),
+        password: formData.password,
+      };
+      const signedInUser = await signIn(payload);
       setUser(signedInUser);
-      navigate('/');
+      navigate("/");
     } catch (err) {
       setMessage(err.message);
     }
@@ -34,34 +39,34 @@ const SignInForm = () => {
     <main>
       <h1>Sign In</h1>
       <p>{message}</p>
-      <form autoComplete='off' onSubmit={handleSubmit}>
+      <form autoComplete="off" onSubmit={handleSubmit}>
         <div>
-          <label htmlFor='email'>Username:</label>
+          <label htmlFor="email">Email:</label>
           <input
-            type='text'
-            autoComplete='off'
-            id='username'
+            type="email"
+            autoComplete="off"
+            id="email"
             value={formData.username}
-            name='username'
+            name="username"
             onChange={handleChange}
             required
           />
         </div>
         <div>
-          <label htmlFor='password'>Password:</label>
+          <label htmlFor="password">Password:</label>
           <input
-            type='password'
-            autoComplete='off'
-            id='password'
+            type="password"
+            autoComplete="off"
+            id="password"
             value={formData.password}
-            name='password'
+            name="password"
             onChange={handleChange}
             required
           />
         </div>
         <div>
           <button>Sign In</button>
-          <button onClick={() => navigate('/')}>Cancel</button>
+          <button onClick={() => navigate("/")}>Cancel</button>
         </div>
       </form>
     </main>

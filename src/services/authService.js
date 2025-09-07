@@ -1,10 +1,10 @@
-const BASE_URL = `${import.meta.env.VITE_BACK_END_SERVER_URL}/auth`;
+const BASE_URL = `${import.meta.env.VITE_API_BASE}/auth`;
 
 const signUp = async (formData) => {
   try {
     const res = await fetch(`${BASE_URL}/sign-up`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
     });
 
@@ -15,22 +15,22 @@ const signUp = async (formData) => {
     }
 
     if (data.token) {
-      localStorage.setItem('token', data.token);
-      return JSON.parse(atob(data.token.split('.')[1])).payload;
+      localStorage.setItem("token", data.token);
+      return JSON.parse(atob(data.token.split(".")[1])).payload;
     }
 
-    throw new Error('Invalid response from server');
+    throw new Error("Invalid response from server");
   } catch (err) {
     console.log(err);
-    throw new Error(err);
+    throw err instanceof Error ? err : new Error(String(err?.message || err));
   }
 };
 
 const signIn = async (formData) => {
   try {
     const res = await fetch(`${BASE_URL}/sign-in`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
     });
 
@@ -41,18 +41,29 @@ const signIn = async (formData) => {
     }
 
     if (data.token) {
-      localStorage.setItem('token', data.token);
-      return JSON.parse(atob(data.token.split('.')[1])).payload;
+      localStorage.setItem("token", data.token);
+      return JSON.parse(atob(data.token.split(".")[1])).payload;
     }
 
-    throw new Error('Invalid response from server');
+    throw new Error("Invalid response from server");
   } catch (err) {
     console.log(err);
-    throw new Error(err);
+    throw err instanceof Error ? err : new Error(String(err?.message || err));
   }
 };
 
-export {
-  signUp,
-  signIn,
-};
+async function bootstrapAdmin({ username, password }) {
+  const res = await fetch(`${BASE_URL}/bootstrap-admin`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.err || data.error || res.statusText);
+  }
+  return data; // { token }
+}
+
+export { signUp, signIn, bootstrapAdmin };
