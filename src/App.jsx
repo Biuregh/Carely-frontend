@@ -6,6 +6,7 @@ import Connected from "./pages/Connected.jsx";
 import CalendarPage from "./pages/Calendar.jsx";
 import AdminUsers from "./pages/AdminUsers.jsx";
 import BootstrapAdmin from "./pages/BootstrapAdmin.jsx";
+import AppointmentManager from "./pages/AppointmentManager.jsx";
 
 import NavBar from "./components/NavBar/NavBar";
 import SignUpForm from "./components/SignUpForm/SignUpForm";
@@ -27,6 +28,14 @@ function App() {
         <Route path="/connected" element={<Connected />} />
         <Route path="/agenda" element={<Connected />} />
         <Route path="/calendar" element={<CalendarPage />} />
+        <Route
+          path="/appointments"
+          element={
+            <RequireRole roles={["admin", "reception"]}>
+              <AppointmentManager />
+            </RequireRole>
+          }
+        />
         <Route path="/sign-up" element={<SignUpForm />} />
         <Route path="/sign-in" element={<SignInForm />} />
         <Route

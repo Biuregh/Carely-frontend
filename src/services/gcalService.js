@@ -1,74 +1,46 @@
-const API = import.meta.env.VITE_API_BASE;
+import { jsonFetch } from "./http.js";
 
-function authHeader() {
-  const t = localStorage.getItem("token");
-  return t ? { Authorization: `Bearer ${t}` } : {};
+function q(path, params) {
+  const usp = new URLSearchParams(params);
+  return `${path}?${usp.toString()}`;
 }
 
 async function createEvent(payload) {
-  const res = await fetch(`${API}/api/gcal/events`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...authHeader() },
-    credentials: "include",
-    body: JSON.stringify(payload),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || data.err || res.statusText);
-  return data;
+  return jsonFetch("/api/gcal/events", { method: "POST", body: payload });
 }
 
 async function getAgenda({ day, providerId }) {
-  const url = new URL(`${API}/api/gcal/agenda`);
-  url.searchParams.set("day", day);
-  if (providerId) url.searchParams.set("providerId", providerId);
-  const res = await fetch(url, {
-    headers: authHeader(),
-    credentials: "include",
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || data.err || res.statusText);
-  return data;
+  return jsonFetch(
+    q("/api/gcal/agenda", { day, ...(providerId ? { providerId } : {}) })
+  );
 }
 
 async function getEventsRange({ timeMin, timeMax, providerId }) {
-  const url = new URL(`${API}/api/gcal/events-range`);
-  url.searchParams.set("timeMin", timeMin);
-  url.searchParams.set("timeMax", timeMax);
-  if (providerId) url.searchParams.set("providerId", providerId);
-  const res = await fetch(url, {
-    headers: authHeader(),
-    credentials: "include",
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || data.err || res.statusText);
-  return data;
+  return jsonFetch(
+    q("/api/gcal/events-range", {
+      timeMin,
+      timeMax,
+      ...(providerId ? { providerId } : {}),
+    })
+  );
 }
 
 async function deleteEvent(providerId, eventId) {
-  const url = new URL(`${API}/api/gcal/events/${eventId}`);
-  if (providerId) url.searchParams.set("providerId", providerId);
-  const res = await fetch(url, {
-    method: "DELETE",
-    headers: authHeader(),
-    credentials: "include",
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || data.err || res.statusText);
-  return data;
+  return jsonFetch(
+    q(`/api/gcal/events/${encodeURIComponent(eventId)}`, {
+      ...(providerId ? { providerId } : {}),
+    }),
+    { method: "DELETE" }
+  );
 }
 
 async function updateEvent(providerId, eventId, updates) {
-  const url = new URL(`${API}/api/gcal/events/${eventId}`);
-  if (providerId) url.searchParams.set("providerId", providerId);
-  const res = await fetch(url, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json", ...authHeader() },
-    credentials: "include",
-    body: JSON.stringify(updates),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || data.err || res.statusText);
-  return data;
+  return jsonFetch(
+    q(`/api/gcal/events/${encodeURIComponent(eventId)}`, {
+      ...(providerId ? { providerId } : {}),
+    }),
+    { method: "PATCH", body: updates }
+  );
 }
 
 export { createEvent, getAgenda, getEventsRange, deleteEvent, updateEvent };

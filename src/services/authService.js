@@ -63,7 +63,7 @@ async function bootstrapAdmin({ username, password }) {
   if (!res.ok) {
     throw new Error(data.err || data.error || res.statusText);
   }
-  return data; // { token }
+  return data;
 }
 
 export { signUp, signIn, bootstrapAdmin };

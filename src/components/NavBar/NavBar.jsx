@@ -2,13 +2,13 @@ import { useContext } from "react";
 import { Link } from "react-router";
 import { UserContext } from "../../contexts/UserContext";
 
-const NavBar = () => {
+function NavBar() {
   const { user, setUser } = useContext(UserContext);
 
-  const signOut = () => {
+  function signOut() {
     localStorage.removeItem("token");
     setUser(null);
-  };
+  }
 
   if (!user) {
     return (
@@ -41,6 +41,11 @@ const NavBar = () => {
         <li>
           <Link to="/calendar">Calendar</Link>
         </li>
+        {(user.role === "admin" || user.role === "reception") && (
+          <li>
+            <Link to="/appointments">Appointment Manager</Link>
+          </li>
+        )}
         {user.role === "admin" && (
           <>
             <li>
@@ -59,6 +64,6 @@ const NavBar = () => {
       </ul>
     </nav>
   );
-};
+}
 
 export default NavBar;

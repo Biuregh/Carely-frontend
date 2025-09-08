@@ -1,8 +1,6 @@
-// components/Agenda/Agenda.jsx
 import { useEffect, useMemo, useState } from "react";
-import * as gcal from "../../services/gcalService";
-
-const TZ = "America/New_York";
+import * as gcal from "../../services/gcalService.js";
+import { TZ, toLocalRFC3339NoZ } from "../../utils/datetime.js";
 
 function todayStr() {
   const d = new Date();
@@ -19,12 +17,11 @@ function toLocalDisplay(dtOrDate) {
   return d.toLocaleString();
 }
 
-// "YYYY-MM-DD","HH:MM" (24h) -> "YYYY-MM-DDTHH:MM:00" (NO 'Z')
-function toLocalRFC3339NoZ(dateStr, time24) {
+function toLocalRFC3339NoZ_fromParts(dateStr, time24) {
   const [y, m, d] = dateStr.split("-").map(Number);
   const [hh, mm] = time24.split(":").map(Number);
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${y}-${pad(m)}-${pad(d)}T${pad(hh)}:${pad(mm)}:00`;
+  const dt = new Date(y, m - 1, d, hh, mm);
+  return toLocalRFC3339NoZ(dt);
 }
 
 const Agenda = ({ providerId = "" }) => {
@@ -33,7 +30,6 @@ const Agenda = ({ providerId = "" }) => {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
-  // inline edit
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({
     summary: "",
@@ -42,7 +38,7 @@ const Agenda = ({ providerId = "" }) => {
     date: todayStr(),
     start: "09:00",
     end: "09:30",
-    changeTime: false, // only send start/end when true
+    changeTime: false,
   });
 
   const rangeLabel = useMemo(() => {
@@ -69,9 +65,7 @@ const Agenda = ({ providerId = "" }) => {
     }
   }
 
-  useEffect(() => {
-    // keep manual Load UX
-  }, []);
+  useEffect(() => {}, []);
 
   function beginEdit(ev) {
     const id = ev.id;
@@ -104,7 +98,6 @@ const Agenda = ({ providerId = "" }) => {
       setErr("");
       setLoading(true);
 
-      // build partial update body
       const updates = {
         summary: editForm.summary,
         description: editForm.description,
@@ -112,13 +105,18 @@ const Agenda = ({ providerId = "" }) => {
       };
 
       if (editForm.changeTime) {
-        const startLocal = toLocalRFC3339NoZ(editForm.date, editForm.start);
-        const endLocal = toLocalRFC3339NoZ(editForm.date, editForm.end);
+        const startLocal = toLocalRFC3339NoZ_fromParts(
+          editForm.date,
+          editForm.start
+        );
+        const endLocal = toLocalRFC3339NoZ_fromParts(
+          editForm.date,
+          editForm.end
+        );
         updates.start = { dateTime: startLocal, timeZone: TZ };
         updates.end = { dateTime: endLocal, timeZone: TZ };
       }
 
-      // provider-scoped PATCH
       await gcal.updateEvent(providerId || undefined, id, updates);
       setEditingId(null);
       await load();
@@ -138,9 +136,8 @@ const Agenda = ({ providerId = "" }) => {
     try {
       setErr("");
       setLoading(true);
-      // provider-scoped DELETE (fix)
       await gcal.deleteEvent(providerId, ev.id);
-      await load(); // refresh list
+      await load();
     } catch (e) {
       setErr(e.message || "Failed to delete event");
       setLoading(false);
