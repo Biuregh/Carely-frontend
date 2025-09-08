@@ -6,7 +6,8 @@ import * as patientsService from './services/patients.js'
 import CheckIn from './pages/CheckIn.jsx'
 import CheckInSuccess from './pages/CheckInSuccess.jsx'
 import PatientProfile from './pages/PatientProfile.jsx'
-import logo from './assets/logo.png'  
+import logo from './assets/logo.png' 
+
 
 
 
@@ -48,9 +49,9 @@ const App = () => {
   return (
     <div>
       <header>
-  
+        <div>
           <img src={logo} alt="Carely logo" width="120" />
-       
+        </div>
         <nav>
           <NavLink to="/" end>Check-in</NavLink>
           <NavLink to="/profile">My Profile</NavLink>

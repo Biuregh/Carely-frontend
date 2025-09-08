@@ -1,12 +1,20 @@
 
-const CheckInSuccess = (props) => {
+import { useLocation, Link } from 'react-router-dom'
+
+export default function CheckInSuccess(){
+  const { state } = useLocation() || {}
+  const msg = state?.message || 'You are checked in!'
+  const pid = state?.patientId
+
   return (
-    <div className="w-full max-w-xl bg-white shadow rounded p-6">
-      <h2 className="text-2xl font-semibold text-teal-600 mb-2">Check-in Complete</h2>
-      <p className="text-gray-700 mb-2">{props.message || 'You are checked in!'}</p>
-      {props.patientId && <p className="text-sm text-gray-500">Patient ID: {props.patientId}</p>}
+    <div className="card">
+      <h2>Check-in Complete</h2>
+      <p className="sub">{msg}</p>
+      {pid && <p className="note">Patient ID: {pid}</p>}
+      <div className="row">
+        <Link className="btn secondary" to="/">New Check-in</Link>
+        <Link className="btn" to="/profile">Go to My Profile</Link>
+      </div>
     </div>
   )
 }
-
-export default CheckInSuccess
