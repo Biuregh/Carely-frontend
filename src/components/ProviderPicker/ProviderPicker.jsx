@@ -1,5 +1,5 @@
 import { useEffect, useState, useContext } from "react";
-import { listProviders } from "../../services/userService";
+import { listProviders } from "../../services/userService.js";
 import { UserContext } from "../../contexts/UserContext";
 
 function ProviderPicker({ value, onChange, allowAll = false }) {
@@ -17,13 +17,19 @@ function ProviderPicker({ value, onChange, allowAll = false }) {
       try {
         const data = await listProviders();
         if (ignore) return;
-        setProviders(data || []);
 
-        if (
-          value &&
-          value !== "ALL" &&
-          !(data || []).some((p) => String(p._id) === String(value))
-        ) {
+        const cleaned = (data || [])
+          .filter((p) => p && p.active !== false)
+          .map((p) => ({
+            id: String(p._id),
+            name: p.displayName || p.username || "",
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name));
+
+        setProviders(cleaned);
+
+        const valid = new Set(cleaned.map((p) => p.id));
+        if (value && value !== "ALL" && !valid.has(String(value))) {
           onChange?.(allowAll ? "ALL" : "");
           try {
             localStorage.removeItem("providerId");
@@ -35,11 +41,12 @@ function ProviderPicker({ value, onChange, allowAll = false }) {
         console.error(e);
       }
     }
+
     load();
     return () => {
       ignore = true;
     };
-  }, [user, onChange, value, allowAll]);
+  }, [user, value, allowAll, onChange]);
 
   if (user?.role === "provider") {
     return (
@@ -63,9 +70,8 @@ function ProviderPicker({ value, onChange, allowAll = false }) {
           </option>
         )}
         {providers.map((p) => (
-          <option key={p._id} value={p._id}>
-            {p.displayName || p.username}{" "}
-            {p.active === false ? "(inactive)" : ""}
+          <option key={p.id} value={p.id}>
+            {p.name}
           </option>
         ))}
       </select>
