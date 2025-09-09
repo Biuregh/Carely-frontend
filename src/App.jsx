@@ -6,7 +6,26 @@ import * as patientsService from './services/patients.js'
 import CheckIn from './pages/CheckIn.jsx'
 import CheckInSuccess from './pages/CheckInSuccess.jsx'
 import PatientProfile from './pages/PatientProfile.jsx'
-import logo from './assets/logo.png' 
+import logo from './assets/logo.png'
+
+import { Routes, Route } from "react-router";
+import { useContext } from "react";
+
+import Home from "./pages/Home.jsx";
+import Connected from "./pages/Connected.jsx";
+import CalendarPage from "./pages/Calendar.jsx";
+import AdminUsers from "./pages/AdminUsers.jsx";
+import BootstrapAdmin from "./pages/BootstrapAdmin.jsx";
+import AppointmentManager from "./pages/AppointmentManager.jsx";
+
+import NavBar from "./components/NavBar/NavBar";
+import SignUpForm from "./components/SignUpForm/SignUpForm";
+import SignInForm from "./components/SignInForm/SignInForm";
+import Landing from "./components/Landing/Landing";
+import Dashboard from "./components/Dashboard/Dashboard";
+import { UserContext } from "./contexts/UserContext";
+import RequireRole from "./components/RequireRole/RequireRole.jsx";
+
 
 
 
@@ -15,6 +34,8 @@ const App = () => {
   const [patient, setPatient] = useState(null)
   const [statusMsg, setStatusMsg] = useState('')
   const navigate = useNavigate()
+
+  const { user } = useContext(UserContext);
 
   const currentId = () => localStorage.getItem('patientId')
 
@@ -48,15 +69,8 @@ const App = () => {
 
   return (
     <div>
-      <header>
-        <div>
-          <img src={logo} alt="Carely logo" width="120" />
-        </div>
-        <nav>
-          <NavLink to="/" end>Check-in</NavLink>
-          <NavLink to="/profile">My Profile</NavLink>
-        </nav>
-      </header>
+
+      <NavBar />
 
       <main>
         <Routes>
@@ -78,10 +92,33 @@ const App = () => {
               />
             }
           />
+          <Route path="/home" element={<Home />} />
+          <Route path="/connected" element={<Connected />} />
+          <Route path="/agenda" element={<Connected />} />
+          <Route path="/calendar" element={<CalendarPage />} />
+          <Route
+            path="/appointments"
+            element={
+              <RequireRole roles={["admin", "reception"]}>
+                <AppointmentManager />
+              </RequireRole>
+            }
+          />
+          <Route path="/sign-up" element={<SignUpForm />} />
+          <Route path="/sign-in" element={<SignInForm />} />
+          <Route
+            path="/admin/users"
+            element={
+              <RequireRole roles={["admin"]}>
+                <AdminUsers />
+              </RequireRole>
+            }
+          />
+          <Route path="/bootstrap-admin" element={<BootstrapAdmin />} />
         </Routes>
       </main>
     </div>
   )
 }
 
-export default App
+export default App;
