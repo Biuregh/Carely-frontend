@@ -1,132 +1,206 @@
 import { useState } from "react";
-import * as gcal from "../../services/gcalService.js";
-import { TZ, toLocalRFC3339NoZ } from "../../utils/datetime.js";
+import { create as createAppt } from "../../services/appointmentService.js";
+import { searchPatients } from "../../services/patients.js";
 
-function to24h(s) {
-  const t = String(s).trim().toUpperCase();
-  const ampm = /AM|PM/.test(t) ? t.slice(-2) : null;
-  const core = t.replace(/\s?(AM|PM)$/i, "");
-  const [hStr, mStr = "0"] = core.split(":");
-  let h = parseInt(hStr, 10);
-  const m = parseInt(mStr, 10);
-  if (Number.isNaN(h) || Number.isNaN(m)) return s;
-  if (ampm === "AM") h = h === 12 ? 0 : h;
-  if (ampm === "PM") h = h === 12 ? 12 : h + 12;
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-}
+const TYPES = [
+  { id: "consult", label: "Consultation" },
+  { id: "followup", label: "Follow-up" },
+  { id: "other", label: "Other" },
+];
 
 const CreateEvent = ({ providerId = "" }) => {
-  const [summary, setSummary] = useState("");
-  const [description, setDescription] = useState("");
-  const [location, setLocation] = useState("");
-  const [calendarId, setCalendarId] = useState("primary");
+  // basic fields
+  const [type, setType] = useState(""); // we’ll send as "reason"
   const [date, setDate] = useState("");
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
 
+  // patient picker
+  const [patientQuery, setPatientQuery] = useState("");
+  const [patientResults, setPatientResults] = useState([]);
+  const [patientId, setPatientId] = useState("");
+
+  const [saving, setSaving] = useState(false);
+
+  async function search() {
+    try {
+      const q = {};
+      if (patientQuery.trim()) q.name = patientQuery.trim();
+      const res = await searchPatients(q);
+      setPatientResults(Array.isArray(res) ? res.slice(0, 20) : []);
+    } catch {
+      setPatientResults([]);
+    }
+  }
+
   function resetForm() {
-    setSummary("");
-    setDescription("");
-    setLocation("");
+    setType("");
     setDate("");
     setStart("");
     setEnd("");
+    setPatientQuery("");
+    setPatientResults([]);
+    setPatientId("");
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!summary || !date || !start || !end) {
-      alert("Summary, date, start, and end are required.");
+
+    // providerId must be chosen and not "ALL"
+    const pid = providerId && providerId !== "ALL" ? providerId : "";
+    if (!pid) {
+      alert("Pick a provider first.");
+      return;
+    }
+    if (!type || !date || !start || !end) {
+      alert("Type, date, start and end are required.");
       return;
     }
 
-    const start24 = /^\d{1,2}:\d{2}$/.test(start) ? start : to24h(start);
-    const end24 = /^\d{1,2}:\d{2}$/.test(end) ? end : to24h(end);
-
-    const startLocal = toLocalRFC3339NoZ(new Date(`${date}T${start24}:00`));
-    const endLocal = toLocalRFC3339NoZ(new Date(`${date}T${end24}:00`));
-
-    const payload = {
-      calendarId,
-      providerId: providerId || undefined,
-      summary,
-      description,
-      location,
-      start: { dateTime: startLocal, timeZone: TZ },
-      end: { dateTime: endLocal, timeZone: TZ },
-    };
-
+    setSaving(true);
     try {
-      await gcal.createEvent(payload);
-      alert("Event created.");
+      await createAppt({
+        providerId: pid,
+        patientId: patientId || undefined,
+        date,
+        start,
+        end,
+        reason: type,
+      });
+      alert("Appointment created.");
       resetForm();
     } catch (err) {
       alert("Failed to create event: " + (err.message || String(err)));
+    } finally {
+      setSaving(false);
     }
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{ display: "grid", gap: 12, maxWidth: 480 }}
-    >
-      <input
-        type="text"
-        placeholder="Summary"
-        value={summary}
-        onChange={(e) => setSummary(e.target.value)}
-        required
-      />
-      <textarea
-        placeholder="Description (optional)"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-      />
-      <input
-        type="text"
-        placeholder="Location (optional)"
-        value={location}
-        onChange={(e) => setLocation(e.target.value)}
-      />
-      <label>
-        Calendar ID
-        <input
-          type="text"
-          value={calendarId}
-          onChange={(e) => setCalendarId(e.target.value)}
-          placeholder='e.g. "primary" or "abc123@group.calendar.google.com"'
-          required
-        />
-      </label>
-      <label>
-        Date
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          required
-        />
-      </label>
-      <label>
-        Start
-        <input
-          type="time"
-          value={start}
-          onChange={(e) => setStart(e.target.value)}
-          required
-        />
-      </label>
-      <label>
-        End
-        <input
-          type="time"
-          value={end}
-          onChange={(e) => setEnd(e.target.value)}
-          required
-        />
-      </label>
-      <button type="submit">Create Event</button>
-    </form>
+    <div style={{ display: "grid", gap: 12 }}>
+      <form
+        onSubmit={handleSubmit}
+        style={{ display: "grid", gap: 12, maxWidth: 520 }}
+      >
+        <label>
+          Type
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            required
+          >
+            <option value="">Select type</option>
+            {TYPES.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {/* Patient picker */}
+        <div style={{ border: "1px solid #eee", padding: 8, borderRadius: 8 }}>
+          <strong>Patient (optional)</strong>
+          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+            <input
+              type="text"
+              placeholder="Search by name/email/phone"
+              value={patientQuery}
+              onChange={(e) => setPatientQuery(e.target.value)}
+              style={{ flex: 1 }}
+            />
+            <button type="button" onClick={search}>
+              Search
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPatientQuery("");
+                setPatientResults([]);
+                setPatientId("");
+              }}
+            >
+              Clear
+            </button>
+          </div>
+
+          {patientResults.length > 0 && (
+            <div
+              style={{
+                marginTop: 8,
+                maxHeight: 200,
+                overflow: "auto",
+                borderTop: "1px solid #eee",
+                paddingTop: 8,
+              }}
+            >
+              {patientResults.map((p) => (
+                <label
+                  key={p._id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    marginBottom: 6,
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="patientPick"
+                    checked={patientId === String(p._id)}
+                    onChange={() => setPatientId(String(p._id))}
+                  />
+                  <span>
+                    {p.name} · {p.email} · {p.phone}
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
+
+          {patientId && (
+            <div style={{ marginTop: 6, fontSize: 12, opacity: 0.75 }}>
+              Selected Patient ID: <code>{patientId}</code>
+            </div>
+          )}
+        </div>
+
+        <label>
+          Date
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            required
+          />
+        </label>
+
+        <div style={{ display: "flex", gap: 8 }}>
+          <label style={{ flex: 1 }}>
+            Start
+            <input
+              type="time"
+              value={start}
+              onChange={(e) => setStart(e.target.value)}
+              required
+            />
+          </label>
+          <label style={{ flex: 1 }}>
+            End
+            <input
+              type="time"
+              value={end}
+              onChange={(e) => setEnd(e.target.value)}
+              required
+            />
+          </label>
+        </div>
+
+        <button disabled={saving}>
+          {saving ? "Creating…" : "Create Appointment"}
+        </button>
+      </form>
+    </div>
   );
 };
 

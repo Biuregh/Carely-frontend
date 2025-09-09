@@ -1,9 +1,10 @@
-
-export default function TextInput({label, ...props}){
+const TextInput = ({ label, ...props }) => {
   return (
     <div className="input">
       <label>{label}</label>
-      <input {...props}/>
+      <input {...props} />
     </div>
-  )
-}
+  );
+};
+
+export default TextInput;

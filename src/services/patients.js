@@ -1,22 +1,30 @@
+import { api } from "./api.js";
 
-import { api } from './api.js';
+// Public check-in
+const checkIn = (payload) =>
+  api("/patients/checkin", { method: "POST", body: payload });
 
-// POST /patients/checkin
-const checkIn = async (payload) => {
-  console.log('checkIn payload:', payload);
-  return api('/patients/checkin', { method: 'POST', body: payload });
+// Patient profile
+const getPatient = (id) => api(`/patients/${id}`);
+const updatePatient = (id, update) =>
+  api(`/patients/${id}`, { method: "PUT", body: update });
+
+// Appointments for a patient
+const getPatientAppointments = (id) => api(`/patients/${id}/appointments`);
+const schedulePatientAppointment = (id, payload) =>
+  api(`/patients/${id}/appointments`, { method: "POST", body: payload });
+
+// Patient search (optionally include next few appts)
+const searchPatients = (params = {}) => {
+  const usp = new URLSearchParams(params);
+  return api(`/patients?${usp.toString()}`);
 };
 
-// GET /patients/:id
-const getPatient = async (id) => {
-  console.log('getPatient id:', id);
-  return api(`/patients/${id}`);
+export {
+  checkIn,
+  getPatient,
+  updatePatient,
+  getPatientAppointments,
+  schedulePatientAppointment,
+  searchPatients,
 };
-
-// PUT /patients/:id
-const updatePatient = async (id, update) => {
-  console.log('updatePatient id:', id, 'update:', update);
-  return api(`/patients/${id}`, { method: 'PUT', body: update });
-};
-
-export { checkIn, getPatient, updatePatient };

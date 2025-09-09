@@ -1,15 +1,5 @@
-
-
-import { useState, useEffect } from 'react'
-import { Routes, Route, NavLink, useNavigate } from 'react-router-dom'
-import * as patientsService from './services/patients.js'
-import CheckIn from './pages/CheckIn.jsx'
-import CheckInSuccess from './pages/CheckInSuccess.jsx'
-import PatientProfile from './pages/PatientProfile.jsx'
-import logo from './assets/logo.png'
-
-import { Routes, Route } from "react-router";
-import { useContext } from "react";
+import { Routes, Route, Navigate, useNavigate } from "react-router";
+import { useContext, useEffect, useState } from "react";
 
 import Home from "./pages/Home.jsx";
 import Connected from "./pages/Connected.jsx";
@@ -23,75 +13,28 @@ import SignUpForm from "./components/SignUpForm/SignUpForm";
 import SignInForm from "./components/SignInForm/SignInForm";
 import Landing from "./components/Landing/Landing";
 import Dashboard from "./components/Dashboard/Dashboard";
-import { UserContext } from "./contexts/UserContext";
 import RequireRole from "./components/RequireRole/RequireRole.jsx";
 
+import CheckIn from "./pages/CheckIn.jsx";
+import CheckInSuccess from "./pages/CheckInSuccess.jsx";
+import PatientProfile from "./pages/PatientProfile.jsx";
 
+import { UserContext } from "./contexts/UserContext";
 
-
-
-const App = () => {
-  const [patient, setPatient] = useState(null)
-  const [statusMsg, setStatusMsg] = useState('')
-  const navigate = useNavigate()
-
+export default function App() {
   const { user } = useContext(UserContext);
-
-  const currentId = () => localStorage.getItem('patientId')
-
-  const handleCheckIn = async (payload) => {
-    const data = await patientsService.checkIn(payload)
-    if (data?.patientId) {
-      localStorage.setItem('patientId', data.patientId)
-      setPatient({ id: data.patientId, ...payload })
-    }
-    setStatusMsg(data?.message || 'You are checked in!')
-    navigate('/checkin/success')
-  }
-
-  const handleLoadPatient = async (id) => {
-    const pid = id || currentId()
-    if (!pid) return
-    const p = await patientsService.getPatient(pid)
-    setPatient(p)
-  }
-
-  const handleSavePatient = async (update) => {
-    const pid = currentId()
-    if (!pid) return
-    const updated = await patientsService.updatePatient(pid, update)
-    setPatient(updated || { ...(patient || {}), ...update })
-  }
-
-  useEffect(() => {
-    if (currentId()) handleLoadPatient()
-  }, [])
 
   return (
     <div>
-
       <NavBar />
-
       <main>
         <Routes>
-          <Route
-            path="/"
-            element={<CheckIn onCheckIn={handleCheckIn} />}
-          />
-          <Route
-            path="/checkin/success"
-            element={<CheckInSuccess message={statusMsg} patientId={patient?.id} />}
-          />
-          <Route
-            path="/profile"
-            element={
-              <PatientProfile
-                patient={patient}
-                loadPatient={handleLoadPatient}
-                savePatient={handleSavePatient}
-              />
-            }
-          />
+          {/* Public check-in flow */}
+          <Route path="/" element={<CheckIn />} />
+          <Route path="/checkin/success" element={<CheckInSuccess />} />
+          <Route path="/profile" element={<PatientProfile />} />
+
+          {/* App core */}
           <Route path="/home" element={<Home />} />
           <Route path="/connected" element={<Connected />} />
           <Route path="/agenda" element={<Connected />} />
@@ -118,7 +61,5 @@ const App = () => {
         </Routes>
       </main>
     </div>
-  )
+  );
 }
-
-export default App;

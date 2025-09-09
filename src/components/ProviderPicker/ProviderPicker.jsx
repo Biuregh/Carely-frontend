@@ -10,10 +10,12 @@ function ProviderPicker({ value, onChange, allowAll = false }) {
     let ignore = false;
 
     async function load() {
+      // provider users auto-select themselves
       if (user?.role === "provider") {
         onChange?.(user._id);
         return;
       }
+
       try {
         const data = await listProviders();
         if (ignore) return;
@@ -29,6 +31,17 @@ function ProviderPicker({ value, onChange, allowAll = false }) {
         setProviders(cleaned);
 
         const valid = new Set(cleaned.map((p) => p.id));
+
+        // If ALL leaked in from another page but this picker doesn't allow it, reset to blank
+        if (!allowAll && value === "ALL") {
+          onChange?.("");
+          try {
+            localStorage.removeItem("providerId");
+          } catch {}
+          return;
+        }
+
+        // If value is not valid, reset to ALL (if allowed) or blank
         if (value && value !== "ALL" && !valid.has(String(value))) {
           onChange?.(allowAll ? "ALL" : "");
           try {

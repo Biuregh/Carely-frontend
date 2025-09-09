@@ -1,81 +1,215 @@
+import { useContext, useEffect, useState } from "react";
+import { useLocation } from "react-router";
+import { getPatient, updatePatient } from "../services/patients.js";
+import { UserContext } from "../contexts/UserContext";
 
-import { useEffect, useState } from 'react'
+const PatientProfile = () => {
+  const { user } = useContext(UserContext);
+  // allow admin OR reception to edit
+  const canEdit = user && (user.role === "admin" || user.role === "reception");
 
-const PatientProfile = (props) => {
-  const [data, setData] = useState({
-    firstName:'', lastName:'', email:'', phone:'', dob:'', gender:'',
-    address:'', city:'', state:'', zip:'',
-    insuranceProvider:'', memberId:'',
-    symptoms:'', medications:'',
-  })
+  const { state } = useLocation() || {};
+  const statePid = state?.patientId || state?._id || null;
 
-  useEffect(() => {
-    if (!props.patient) {
-      props.loadPatient?.()
-    } else {
-      setData(d => ({ ...d, ...props.patient }))
+  const [pid, setPid] = useState(() => {
+    const fromState = statePid ? String(statePid) : null;
+    if (fromState) return fromState;
+    try {
+      return localStorage.getItem("patientId") || "";
+    } catch {
+      return "";
     }
-  }, [props.patient])
+  });
 
-  const set = (k, v) => setData(s => ({ ...s, [k]: v }))
+  const [data, setData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    dob: "",
+    notes: "",
+    allergies: [],
+    medication: [],
+  });
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  const set = (k, v) => setData((s) => ({ ...s, [k]: v }));
+
+  const load = async () => {
+    if (!pid) {
+      setMsg("No patient selected yet.");
+      return;
+    }
+    setLoading(true);
+    setMsg("");
+    try {
+      const p = await getPatient(pid); // { ...patient, appointments: [...] }
+      const { appointments: _ignore, ...rest } = p || {};
+      const dobVal = rest?.dob
+        ? new Date(rest.dob).toISOString().slice(0, 10)
+        : "";
+      setData({ ...rest, dob: dobVal });
+      try {
+        localStorage.setItem("patientId", String(pid));
+      } catch {}
+    } catch (e) {
+      setMsg(e.message || "Failed to load patient.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const save = async (e) => {
-    e.preventDefault()
-    await props.savePatient?.(data)
-  }
+    e?.preventDefault?.();
+    if (!pid) {
+      setMsg("No patient selected.");
+      return;
+    }
+    if (!canEdit) {
+      setMsg("You don't have permission to edit this profile.");
+      return;
+    }
+    setLoading(true);
+    setMsg("");
+    try {
+      const payload = { ...data };
+      // convert DOB back to ISO if present
+      if (payload.dob) {
+        const d = new Date(payload.dob);
+        if (!isNaN(d.getTime())) payload.dob = d.toISOString();
+      }
+      const updated = await updatePatient(pid, payload);
+      const dobVal = updated?.dob
+        ? new Date(updated.dob).toISOString().slice(0, 10)
+        : "";
+      setData({ ...(updated || payload), dob: dobVal });
+      setMsg("Profile saved.");
+    } catch (e) {
+      setMsg(e.message || "Failed to save.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pid]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-3xl bg-white shadow rounded p-20">
-        <h2 className="text-2xl font-semibold text-teal-600 mb-4">Patient Profile</h2>
-        <form onSubmit={save} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input className="border rounded px-3 py-2" placeholder="First Name" value={data.firstName} onChange={e=>set('firstName', e.target.value)} />
-          <input className="border rounded px-3 py-2" placeholder="Last Name" value={data.lastName} onChange={e=>set('lastName', e.target.value)} />
-          <input className="border rounded px-3 py-2" type="email" placeholder="Email" value={data.email} onChange={e=>set('email', e.target.value)} />
-          <input className="border rounded px-3 py-2" placeholder="Phone" value={data.phone} onChange={e=>set('phone', e.target.value)} />
-          <input className="border rounded px-3 py-2" placeholder="YYYY-MM-DD" value={data.dob} onChange={e=>set('dob', e.target.value)} />
+      <div className="w-full max-w-3xl bg-white shadow rounded p-8">
+        <h2 className="text-2xl font-semibold text-teal-600 mb-4">
+          Patient Profile
+        </h2>
 
-          <select
-            className={`border rounded px-3 py-2 ${data.gender ? 'text-gray-900' : 'text-gray-400'}`}
-            value={data.gender}
-            onChange={e => set('gender', e.target.value)}
+        {msg && (
+          <div
+            style={{
+              marginBottom: 12,
+              padding: 8,
+              border: "1px solid #ddd",
+              background: "#f9f9f9",
+            }}
           >
-            <option value="" disabled hidden>Gender</option>
-            <option>Female</option>
-            <option>Male</option>
-            <option>Non-binary</option>
-            <option>Prefer not to say</option>
-          </select>
+            {msg}
+          </div>
+        )}
 
-          <input className="border rounded px-3 py-2 md:col-span-2" placeholder="Street Address" value={data.address} onChange={e=>set('address', e.target.value)} />
-          <input className="border rounded px-3 py-2" placeholder="City" value={data.city} onChange={e=>set('city', e.target.value)} />
-          <input className="border rounded px-3 py-2" placeholder="State" value={data.state} onChange={e=>set('state', e.target.value)} />
-          <input className="border rounded px-3 py-2" placeholder="ZIP" value={data.zip} onChange={e=>set('zip', e.target.value)} />
+        <form onSubmit={save} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input
+            className="border rounded px-3 py-2"
+            placeholder="Full Name"
+            value={data.name}
+            onChange={(e) => set("name", e.target.value)}
+          />
+          <input
+            className="border rounded px-3 py-2"
+            type="email"
+            placeholder="Email"
+            value={data.email}
+            onChange={(e) => set("email", e.target.value)}
+          />
+          <input
+            className="border rounded px-3 py-2"
+            placeholder="Phone"
+            value={data.phone}
+            onChange={(e) => set("phone", e.target.value)}
+          />
+          <input
+            className="border rounded px-3 py-2"
+            type="date"
+            placeholder="YYYY-MM-DD"
+            value={data.dob}
+            onChange={(e) => set("dob", e.target.value)}
+          />
 
-          <input className="border rounded px-3 py-2" placeholder="Insurance Provider" value={data.insuranceProvider} onChange={e=>set('insuranceProvider', e.target.value)} />
-          <input className="border rounded px-3 py-2" placeholder="Member ID" value={data.memberId} onChange={e=>set('memberId', e.target.value)} />
-
-          <textarea className="border rounded px-3 py-2 md:col-span-2" placeholder="Symptoms / Reason for visit" value={data.symptoms} onChange={e=>set('symptoms', e.target.value)} />
-          <textarea className="border rounded px-3 py-2 md:col-span-2" placeholder="Current medications" value={data.medications} onChange={e=>set('medications', e.target.value)} />
+          <textarea
+            className="border rounded px-3 py-2 md:col-span-2"
+            placeholder="Notes"
+            value={data.notes}
+            onChange={(e) => set("notes", e.target.value)}
+          />
+          <textarea
+            className="border rounded px-3 py-2 md:col-span-2"
+            placeholder="Allergies (comma separated)"
+            value={
+              Array.isArray(data.allergies)
+                ? data.allergies.join(", ")
+                : data.allergies || ""
+            }
+            onChange={(e) =>
+              set(
+                "allergies",
+                e.target.value
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+              )
+            }
+          />
+          <textarea
+            className="border rounded px-3 py-2 md:col-span-2"
+            placeholder="Medication (comma separated)"
+            value={
+              Array.isArray(data.medication)
+                ? data.medication.join(", ")
+                : data.medication || ""
+            }
+            onChange={(e) =>
+              set(
+                "medication",
+                e.target.value
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+              )
+            }
+          />
 
           <div className="md:col-span-2 flex justify-end gap-2 mt-2">
             <button
               type="button"
-              className="bg-teal-600 text-white rounded px-4 py-2 hover:bg-teal-700 transition-colors"
-              onClick={() => props.loadPatient?.()}
+              className="bg-gray-200 rounded px-4 py-2"
+              onClick={load}
+              disabled={loading}
             >
-              Reload
+              {loading ? "Loading…" : "Reload"}
             </button>
-            <button
-              className="bg-teal-600 text-white rounded px-4 py-2 hover:bg-teal-700 transition-colors"
-            >
-              Save Profile
-            </button>
+
+            {canEdit && (
+              <button
+                className="bg-teal-600 text-white rounded px-4 py-2 hover:bg-teal-700 transition-colors"
+                disabled={loading}
+              >
+                Save Profile
+              </button>
+            )}
           </div>
         </form>
-      </div>  
+      </div>
     </div>
-)
-}
+  );
+};
 
-export default PatientProfile
+export default PatientProfile;
