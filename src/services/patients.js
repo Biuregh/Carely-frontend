@@ -1,4 +1,5 @@
 import { api } from "./api.js";
+import { jsonFetch } from "./http.js";
 
 // Public check-in
 const checkIn = (payload) =>
@@ -8,6 +9,10 @@ const checkIn = (payload) =>
 const getPatient = (id) => api(`/patients/${id}`);
 const updatePatient = (id, update) =>
   api(`/patients/${id}`, { method: "PUT", body: update });
+
+// NEW: receptionist/admin create patient
+const createPatient = (payload) =>
+  jsonFetch("/patients", { method: "POST", body: payload });
 
 // Appointments for a patient
 const getPatientAppointments = (id) => api(`/patients/${id}/appointments`);
@@ -24,6 +29,7 @@ export {
   checkIn,
   getPatient,
   updatePatient,
+  createPatient,
   getPatientAppointments,
   schedulePatientAppointment,
   searchPatients,

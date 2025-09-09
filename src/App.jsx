@@ -1,5 +1,5 @@
-import { Routes, Route, Navigate, useNavigate } from "react-router";
-import { useContext, useEffect, useState } from "react";
+import { Routes, Route, Navigate } from "react-router";
+import { useContext } from "react";
 
 import Home from "./pages/Home.jsx";
 import Connected from "./pages/Connected.jsx";
@@ -11,13 +11,12 @@ import AppointmentManager from "./pages/AppointmentManager.jsx";
 import NavBar from "./components/NavBar/NavBar";
 import SignUpForm from "./components/SignUpForm/SignUpForm";
 import SignInForm from "./components/SignInForm/SignInForm";
-import Landing from "./components/Landing/Landing";
-import Dashboard from "./components/Dashboard/Dashboard";
 import RequireRole from "./components/RequireRole/RequireRole.jsx";
 
 import CheckIn from "./pages/CheckIn.jsx";
 import CheckInSuccess from "./pages/CheckInSuccess.jsx";
 import PatientProfile from "./pages/PatientProfile.jsx";
+import StaffDashboard from "./pages/StaffDashboard.jsx";
 
 import { UserContext } from "./contexts/UserContext";
 
@@ -29,12 +28,22 @@ export default function App() {
       <NavBar />
       <main>
         <Routes>
-          {/* Public check-in flow */}
+          {/* Public */}
           <Route path="/" element={<CheckIn />} />
           <Route path="/checkin/success" element={<CheckInSuccess />} />
+
+          {/* Patient portal */}
           <Route path="/profile" element={<PatientProfile />} />
 
-          {/* App core */}
+          {/* Staff */}
+          <Route
+            path="/staff"
+            element={
+              <RequireRole roles={["admin", "reception"]}>
+                <StaffDashboard />
+              </RequireRole>
+            }
+          />
           <Route path="/home" element={<Home />} />
           <Route path="/connected" element={<Connected />} />
           <Route path="/agenda" element={<Connected />} />
@@ -47,6 +56,8 @@ export default function App() {
               </RequireRole>
             }
           />
+
+          {/* Auth */}
           <Route path="/sign-up" element={<SignUpForm />} />
           <Route path="/sign-in" element={<SignInForm />} />
           <Route
@@ -58,6 +69,12 @@ export default function App() {
             }
           />
           <Route path="/bootstrap-admin" element={<BootstrapAdmin />} />
+
+          {/* Fallback */}
+          <Route
+            path="*"
+            element={<Navigate to={user ? "/staff" : "/"} replace />}
+          />
         </Routes>
       </main>
     </div>

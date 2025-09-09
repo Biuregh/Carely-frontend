@@ -33,7 +33,7 @@ function NavBar() {
       <ul>
         <li>Welcome, {user.username}</li>
         <li>
-          <Link to="/">Dashboard</Link>
+          <Link to="/staff">Dashboard</Link>
         </li>
         <li>
           <Link to="/agenda">Schedule</Link>

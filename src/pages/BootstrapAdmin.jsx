@@ -51,7 +51,7 @@ function BootstrapAdmin() {
       }
 
       setMsg("Admin bootstrapped. You are now signed in.");
-      navigate("/");
+      navigate("/staff");
     } catch (err) {
       setMsg(err.message || "Failed to bootstrap admin.");
     }

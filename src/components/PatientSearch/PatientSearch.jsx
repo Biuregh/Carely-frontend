@@ -1,7 +1,13 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { searchPatients } from "../../services/patients.js";
+import { UserContext } from "../../contexts/UserContext";
+import PatientQuickCreate from "../PatientQuickCreate/PatientQuickCreate.jsx";
 
 const PatientSearch = ({ onSelectPatient }) => {
+  const { user } = useContext(UserContext);
+  const canCreate =
+    user && (user.role === "admin" || user.role === "reception");
+
   const [name, setName] = useState("");
   const [dob, setDob] = useState("");
   const [email, setEmail] = useState("");
@@ -9,6 +15,7 @@ const PatientSearch = ({ onSelectPatient }) => {
   const [patients, setPatients] = useState([]);
   const [selected, setSelected] = useState(null);
   const [searching, setSearching] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
 
   const onSearch = async () => {
     setSearching(true);
@@ -21,7 +28,7 @@ const PatientSearch = ({ onSelectPatient }) => {
         dob,
         email,
         phone,
-        withAppointments: true, // include each patient’s next few appts (optional)
+        withAppointments: true,
       });
       setPatients(Array.isArray(res) ? res : []);
     } finally {
@@ -48,7 +55,42 @@ const PatientSearch = ({ onSelectPatient }) => {
 
   return (
     <div className="box">
-      <h3 className="title">Patient Search</h3>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+        }}
+      >
+        <h3 className="title">Patient Search</h3>
+        {canCreate && (
+          <button className="btn" onClick={() => setShowCreate((v) => !v)}>
+            {showCreate ? "Close New Patient" : "New Patient"}
+          </button>
+        )}
+      </div>
+
+      {showCreate && (
+        <div
+          style={{
+            border: "1px solid #e5e5e5",
+            borderRadius: 8,
+            padding: 8,
+            marginBottom: 12,
+          }}
+        >
+          <PatientQuickCreate
+            onCreated={(p) => {
+              setShowCreate(false);
+              // prefill and refresh results
+              setName(p?.name || "");
+              setEmail(p?.email || "");
+              onSearch();
+              onSelectPatient?.(p || null);
+            }}
+          />
+        </div>
+      )}
 
       <label className="label">Name</label>
       <input
