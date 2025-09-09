@@ -1,3 +1,13 @@
+
+
+import { useState, useEffect } from 'react'
+import { Routes, Route, NavLink, useNavigate } from 'react-router-dom'
+import * as patientsService from './services/patients.js'
+import CheckIn from './pages/CheckIn.jsx'
+import CheckInSuccess from './pages/CheckInSuccess.jsx'
+import PatientProfile from './pages/PatientProfile.jsx'
+import logo from './assets/logo.png'
+
 import { Routes, Route } from "react-router";
 import { useContext } from "react";
 
@@ -16,40 +26,99 @@ import Dashboard from "./components/Dashboard/Dashboard";
 import { UserContext } from "./contexts/UserContext";
 import RequireRole from "./components/RequireRole/RequireRole.jsx";
 
-function App() {
+
+
+
+
+const App = () => {
+  const [patient, setPatient] = useState(null)
+  const [statusMsg, setStatusMsg] = useState('')
+  const navigate = useNavigate()
+
   const { user } = useContext(UserContext);
 
+  const currentId = () => localStorage.getItem('patientId')
+
+  const handleCheckIn = async (payload) => {
+    const data = await patientsService.checkIn(payload)
+    if (data?.patientId) {
+      localStorage.setItem('patientId', data.patientId)
+      setPatient({ id: data.patientId, ...payload })
+    }
+    setStatusMsg(data?.message || 'You are checked in!')
+    navigate('/checkin/success')
+  }
+
+  const handleLoadPatient = async (id) => {
+    const pid = id || currentId()
+    if (!pid) return
+    const p = await patientsService.getPatient(pid)
+    setPatient(p)
+  }
+
+  const handleSavePatient = async (update) => {
+    const pid = currentId()
+    if (!pid) return
+    const updated = await patientsService.updatePatient(pid, update)
+    setPatient(updated || { ...(patient || {}), ...update })
+  }
+
+  useEffect(() => {
+    if (currentId()) handleLoadPatient()
+  }, [])
+
   return (
-    <>
+    <div>
+
       <NavBar />
-      <Routes>
-        <Route path="/" element={user ? <Dashboard /> : <Landing />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/connected" element={<Connected />} />
-        <Route path="/agenda" element={<Connected />} />
-        <Route path="/calendar" element={<CalendarPage />} />
-        <Route
-          path="/appointments"
-          element={
-            <RequireRole roles={["admin", "reception"]}>
-              <AppointmentManager />
-            </RequireRole>
-          }
-        />
-        <Route path="/sign-up" element={<SignUpForm />} />
-        <Route path="/sign-in" element={<SignInForm />} />
-        <Route
-          path="/admin/users"
-          element={
-            <RequireRole roles={["admin"]}>
-              <AdminUsers />
-            </RequireRole>
-          }
-        />
-        <Route path="/bootstrap-admin" element={<BootstrapAdmin />} />
-      </Routes>
-    </>
-  );
+
+      <main>
+        <Routes>
+          <Route
+            path="/"
+            element={<CheckIn onCheckIn={handleCheckIn} />}
+          />
+          <Route
+            path="/checkin/success"
+            element={<CheckInSuccess message={statusMsg} patientId={patient?.id} />}
+          />
+          <Route
+            path="/profile"
+            element={
+              <PatientProfile
+                patient={patient}
+                loadPatient={handleLoadPatient}
+                savePatient={handleSavePatient}
+              />
+            }
+          />
+          <Route path="/home" element={<Home />} />
+          <Route path="/connected" element={<Connected />} />
+          <Route path="/agenda" element={<Connected />} />
+          <Route path="/calendar" element={<CalendarPage />} />
+          <Route
+            path="/appointments"
+            element={
+              <RequireRole roles={["admin", "reception"]}>
+                <AppointmentManager />
+              </RequireRole>
+            }
+          />
+          <Route path="/sign-up" element={<SignUpForm />} />
+          <Route path="/sign-in" element={<SignInForm />} />
+          <Route
+            path="/admin/users"
+            element={
+              <RequireRole roles={["admin"]}>
+                <AdminUsers />
+              </RequireRole>
+            }
+          />
+          <Route path="/bootstrap-admin" element={<BootstrapAdmin />} />
+        </Routes>
+      </main>
+    </div>
+  )
 }
 
 export default App;
