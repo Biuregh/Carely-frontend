@@ -1,17 +1,7 @@
 import { useState } from "react";
-import * as gcal from "../../services/gcalService";
+import * as gcal from "../../services/gcalService.js";
+import { TZ, toLocalRFC3339NoZ } from "../../utils/datetime.js";
 
-const TZ = "America/New_York";
-const pad = (n) => String(n).padStart(2, "0");
-
-// "YYYY-MM-DD", "HH:MM" (24h) -> "YYYY-MM-DDTHH:MM:00"
-function toLocalRFC3339NoZ(dateStr, time24) {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const [hh, mm] = time24.split(":").map(Number);
-  return `${y}-${pad(m)}-${pad(d)}T${pad(hh)}:${pad(mm)}:00`;
-}
-
-// normalize if some input ever sends "2:00 PM"
 function to24h(s) {
   const t = String(s).trim().toUpperCase();
   const ampm = /AM|PM/.test(t) ? t.slice(-2) : null;
@@ -22,7 +12,7 @@ function to24h(s) {
   if (Number.isNaN(h) || Number.isNaN(m)) return s;
   if (ampm === "AM") h = h === 12 ? 0 : h;
   if (ampm === "PM") h = h === 12 ? 12 : h + 12;
-  return `${pad(h)}:${pad(m)}`;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
 const CreateEvent = ({ providerId = "" }) => {
@@ -34,6 +24,15 @@ const CreateEvent = ({ providerId = "" }) => {
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
 
+  function resetForm() {
+    setSummary("");
+    setDescription("");
+    setLocation("");
+    setDate("");
+    setStart("");
+    setEnd("");
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     if (!summary || !date || !start || !end) {
@@ -43,12 +42,13 @@ const CreateEvent = ({ providerId = "" }) => {
 
     const start24 = /^\d{1,2}:\d{2}$/.test(start) ? start : to24h(start);
     const end24 = /^\d{1,2}:\d{2}$/.test(end) ? end : to24h(end);
-    const startLocal = toLocalRFC3339NoZ(date, start24);
-    const endLocal = toLocalRFC3339NoZ(date, end24);
+
+    const startLocal = toLocalRFC3339NoZ(new Date(`${date}T${start24}:00`));
+    const endLocal = toLocalRFC3339NoZ(new Date(`${date}T${end24}:00`));
 
     const payload = {
       calendarId,
-      providerId: providerId || undefined, // pass through if present
+      providerId: providerId || undefined,
       summary,
       description,
       location,
@@ -59,6 +59,7 @@ const CreateEvent = ({ providerId = "" }) => {
     try {
       await gcal.createEvent(payload);
       alert("Event created.");
+      resetForm();
     } catch (err) {
       alert("Failed to create event: " + (err.message || String(err)));
     }

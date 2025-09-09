@@ -1,25 +1,11 @@
-const API = import.meta.env.VITE_API_BASE;
-
-function authHeader() {
-  const t = localStorage.getItem("token");
-  return t ? { Authorization: `Bearer ${t}` } : {};
-}
+import { jsonFetch } from "./http.js";
 
 async function index() {
-  const res = await fetch(`${API}/users`, {
-    headers: authHeader(),
-  });
-  const data = await res.json();
-  if (data.err) throw new Error(data.err);
-  return data;
+  return jsonFetch("/users");
 }
 
 async function listProviders() {
-  const res = await fetch(`${API}/users/providers`, {
-    headers: authHeader(),
-    credentials: "include",
-  });
-  return res.json();
+  return jsonFetch("/users/providers");
 }
 
 export { index, listProviders };

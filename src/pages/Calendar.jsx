@@ -5,25 +5,16 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 
 import ProviderPicker from "../components/ProviderPicker/ProviderPicker.jsx";
-import * as gcal from "../services/gcalService";
+import * as gcal from "../services/gcalService.js";
+import { listProviders } from "../services/userService.js";
+import {
+  TZ,
+  toLocalRFC3339NoZ,
+  toDateStr,
+  toTimeStr,
+} from "../utils/datetime.js";
 
-const TZ = "America/New_York";
-
-const pad = (n) => String(n).padStart(2, "0");
-function toLocalRFC3339NoZ(d) {
-  // JS Date -> "YYYY-MM-DDTHH:MM:SS" (no Z)
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
-    d.getHours()
-  )}:${pad(d.getMinutes())}:00`;
-}
-function toDateStr(d) {
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-function toTimeStr(d) {
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-function mapGoogleToFC(googleEvent) {
+function mapGoogleToFC(googleEvent, meta) {
   const start = googleEvent.start?.dateTime || googleEvent.start?.date || null;
   const end = googleEvent.end?.dateTime || googleEvent.end?.date || null;
   const allDay = Boolean(
@@ -38,20 +29,22 @@ function mapGoogleToFC(googleEvent) {
     extendedProps: {
       description: googleEvent.description || "",
       location: googleEvent.location || "",
+      providerId: meta?.providerId || "",
+      providerName: meta?.providerName || "",
     },
   };
 }
 
-const CalendarPage = () => {
+function CalendarPage() {
   const [providerId, setProviderId] = useState(
-    () => localStorage.getItem("providerId") || ""
+    () => localStorage.getItem("providerId") || "ALL"
   );
   const calRef = useRef(null);
 
-  // Edit panel state
   const [panelOpen, setPanelOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [editId, setEditId] = useState("");
+  const [editProviderId, setEditProviderId] = useState("");
   const [form, setForm] = useState({
     summary: "",
     description: "",
@@ -59,10 +52,9 @@ const CalendarPage = () => {
     date: "",
     start: "",
     end: "",
-    changeTime: false, // only send start/end when true
+    changeTime: false,
   });
 
-  // persist provider selection (same behavior as /connected)
   useEffect(() => {
     if (providerId) localStorage.setItem("providerId", providerId);
     else localStorage.removeItem("providerId");
@@ -73,10 +65,47 @@ const CalendarPage = () => {
     if (api) api.refetchEvents();
   }
 
+  async function fetchAllProvidersEvents(info) {
+    const provs = await listProviders().catch(() => []);
+    const usable = (provs || [])
+      .filter((p) => p && p.active !== false && p.calendarId)
+      .map((p) => ({
+        id: String(p._id),
+        name: p.displayName || p.username || "",
+      }));
+
+    const results = [];
+    await Promise.all(
+      usable.map(async (p) => {
+        try {
+          const data = await gcal.getEventsRange({
+            timeMin: info.start.toISOString(),
+            timeMax: info.end.toISOString(),
+            providerId: p.id,
+          });
+          const items = Array.isArray(data.items) ? data.items : [];
+          results.push(
+            ...items.map((ev) =>
+              mapGoogleToFC(ev, { providerId: p.id, providerName: p.name })
+            )
+          );
+        } catch {
+          /* skip this provider on failure */
+        }
+      })
+    );
+    return results;
+  }
+
   async function fetchGoogleRange(info, successCallback, failureCallback) {
     try {
       if (!providerId) {
-        successCallback([]); // do nothing until provider chosen
+        successCallback([]);
+        return;
+      }
+      if (providerId === "ALL") {
+        const merged = await fetchAllProvidersEvents(info);
+        successCallback(merged);
         return;
       }
       const data = await gcal.getEventsRange({
@@ -85,7 +114,9 @@ const CalendarPage = () => {
         providerId,
       });
       const items = Array.isArray(data.items) ? data.items : [];
-      successCallback(items.map(mapGoogleToFC));
+      successCallback(
+        items.map((ev) => mapGoogleToFC(ev, { providerId, providerName: "" }))
+      );
     } catch (err) {
       failureCallback(err);
     }
@@ -93,13 +124,18 @@ const CalendarPage = () => {
 
   async function onEventDropResize(changeInfo) {
     const ev = changeInfo.event;
+    const start = ev.start ? new Date(ev.start) : null;
+    const end = ev.end ? new Date(ev.end) : start;
+    const pid =
+      ev.extendedProps?.providerId || (providerId !== "ALL" ? providerId : "");
+
     try {
-      if (!providerId) throw new Error("Pick a provider first.");
+      if (!pid) throw new Error("Pick a provider first.");
       setBusy(true);
-      await gcal.updateEvent(providerId, ev.id, {
-        start: { dateTime: toLocalRFC3339NoZ(ev.start), timeZone: TZ },
-        end: ev.end
-          ? { dateTime: toLocalRFC3339NoZ(ev.end), timeZone: TZ }
+      await gcal.updateEvent(pid, ev.id, {
+        start: { dateTime: toLocalRFC3339NoZ(start), timeZone: TZ },
+        end: end
+          ? { dateTime: toLocalRFC3339NoZ(end), timeZone: TZ }
           : undefined,
       });
       setBusy(false);
@@ -111,12 +147,14 @@ const CalendarPage = () => {
   }
 
   function onEventClick(clickInfo) {
-    // OPEN EDIT PANEL (no more delete on click)
     const ev = clickInfo.event;
     const start = ev.start ? new Date(ev.start) : null;
     const end = ev.end ? new Date(ev.end) : start;
 
     setEditId(ev.id);
+    setEditProviderId(
+      ev.extendedProps?.providerId || (providerId !== "ALL" ? providerId : "")
+    );
     setForm({
       summary: ev.title || "",
       description: ev.extendedProps?.description || "",
@@ -124,17 +162,18 @@ const CalendarPage = () => {
       date: start ? toDateStr(start) : "",
       start: start ? toTimeStr(start) : "",
       end: end ? toTimeStr(end) : "",
-      changeTime: false, // default OFF → only title/notes/location unless opted in
+      changeTime: false,
     });
     setPanelOpen(true);
   }
 
   async function handleSave() {
-    if (!providerId || !editId) return;
+    if (!editId) return;
     try {
       setBusy(true);
+      const pid = editProviderId || (providerId !== "ALL" ? providerId : "");
+      if (!pid) throw new Error("Pick a provider first.");
 
-      // Build partial update body (only what user allows)
       const updates = {
         summary: form.summary,
         description: form.description,
@@ -148,7 +187,8 @@ const CalendarPage = () => {
         updates.end = { dateTime: `${form.date}T${form.end}:00`, timeZone: TZ };
       }
 
-      await gcal.updateEvent(providerId, editId, updates);
+      await gcal.updateEvent(pid, editId, updates);
+
       setBusy(false);
       setPanelOpen(false);
       refetchCalendar();
@@ -159,12 +199,14 @@ const CalendarPage = () => {
   }
 
   async function handleDelete() {
-    if (!providerId || !editId) return;
+    if (!editId) return;
     const ok = confirm(`Delete "${form.summary || "(no title)"}"?`);
     if (!ok) return;
     try {
       setBusy(true);
-      await gcal.deleteEvent(providerId, editId);
+      const pid = editProviderId || (providerId !== "ALL" ? providerId : "");
+      if (!pid) throw new Error("Pick a provider first.");
+      await gcal.deleteEvent(pid, editId);
       setBusy(false);
       setPanelOpen(false);
       refetchCalendar();
@@ -174,17 +216,15 @@ const CalendarPage = () => {
     }
   }
 
-  // refetch when provider changes
   useEffect(() => {
     refetchCalendar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [providerId]);
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gap: 12 }}>
       <h2>Calendar</h2>
 
-      <ProviderPicker value={providerId} onChange={setProviderId} />
+      <ProviderPicker value={providerId} onChange={setProviderId} allowAll />
 
       <FullCalendar
         ref={calRef}
@@ -195,26 +235,18 @@ const CalendarPage = () => {
           center: "title",
           right: "dayGridMonth,timeGridWeek,timeGridDay",
         }}
-        editable={true} // drag/resize time edits
+        editable={true}
         selectable={false}
         eventOverlap={true}
-        events={fetchGoogleRange} // provider-scoped range
+        events={fetchGoogleRange}
         eventDrop={onEventDropResize}
         eventResize={onEventDropResize}
-        eventClick={onEventClick} // open edit panel (no auto-delete)
+        eventClick={onEventClick}
         height="auto"
       />
 
       {panelOpen && (
-        <div
-          style={{
-            border: "1px solid #ddd",
-            borderRadius: 8,
-            padding: 12,
-            background: "#111",
-            color: "#eee",
-          }}
-        >
+        <div>
           <div
             style={{
               display: "flex",
@@ -321,24 +353,15 @@ const CalendarPage = () => {
               <button onClick={handleSave} disabled={busy}>
                 Save
               </button>
-              <button
-                onClick={handleDelete}
-                disabled={busy}
-                style={{ color: "#fff", background: "#b00" }}
-              >
+              <button onClick={handleDelete} disabled={busy}>
                 Delete
               </button>
-            </div>
-
-            <div style={{ fontSize: 12, opacity: 0.8 }}>
-              Tip: you can also drag/resize the event directly on the calendar
-              to change time.
             </div>
           </div>
         </div>
       )}
     </div>
   );
-};
+}
 
 export default CalendarPage;

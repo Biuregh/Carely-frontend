@@ -13,7 +13,7 @@ function Home() {
         return;
       }
       const { url } = await res.json();
-      window.location.href = url; // go straight to Google consent
+      window.location.href = url; 
     } catch (e) {
       alert(`Network error: ${e.message || e}`);
     }

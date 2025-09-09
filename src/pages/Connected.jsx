@@ -10,12 +10,12 @@ function Connected() {
 
   useEffect(() => {
     if (providerId) localStorage.setItem("providerId", providerId);
-    else localStorage.removeItem("providerId"); // clear if blank
+    else localStorage.removeItem("providerId");
   }, [providerId]);
 
   return (
     <div style={{ padding: 16 }}>
-      <h2>Google Calendar connected</h2>
+      <h2>Schedule Appointments</h2>
       <ProviderPicker value={providerId} onChange={setProviderId} />
       <CreateEvent providerId={providerId} />
       <Agenda providerId={providerId} />
