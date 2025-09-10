@@ -12,7 +12,6 @@ function todayStr() {
 }
 
 export default function StaffDashboard() {
-  // --- New patient form ---
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -55,7 +54,6 @@ export default function StaffDashboard() {
       try {
         localStorage.setItem("patientId", String(created._id));
       } catch {}
-      // reset minimal fields
       setForm((s) => ({ ...s, name: "", email: "", phone: "", dob: "" }));
     } catch (e) {
       setMsg(e.message || "Failed to create patient.");
@@ -64,7 +62,6 @@ export default function StaffDashboard() {
     }
   }
 
-  // --- Today's agenda (by provider) ---
   const [providers, setProviders] = useState([]);
   const [providerId, setProviderId] = useState("");
   const [day, setDay] = useState(todayStr());
@@ -89,7 +86,6 @@ export default function StaffDashboard() {
         setProviders([]);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function refreshAgenda() {
@@ -113,7 +109,6 @@ export default function StaffDashboard() {
     <main style={{ padding: 16, maxWidth: 800 }}>
       <h2 style={{ marginBottom: 8 }}>Staff Dashboard</h2>
 
-      {/* NEW PATIENT (no Quick Actions row anymore) */}
       <section style={{ marginTop: 12 }}>
         <h3 style={{ marginBottom: 8 }}>New Patient</h3>
 

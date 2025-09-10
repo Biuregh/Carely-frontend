@@ -28,14 +28,10 @@ export default function App() {
       <NavBar />
       <main>
         <Routes>
-          {/* Public */}
           <Route path="/" element={<CheckIn />} />
           <Route path="/checkin/success" element={<CheckInSuccess />} />
-
-          {/* Patient portal */}
           <Route path="/profile" element={<PatientProfile />} />
 
-          {/* Staff */}
           <Route
             path="/staff"
             element={
@@ -57,7 +53,6 @@ export default function App() {
             }
           />
 
-          {/* Auth */}
           <Route path="/sign-up" element={<SignUpForm />} />
           <Route path="/sign-in" element={<SignInForm />} />
           <Route
@@ -70,7 +65,6 @@ export default function App() {
           />
           <Route path="/bootstrap-admin" element={<BootstrapAdmin />} />
 
-          {/* Fallback */}
           <Route
             path="*"
             element={<Navigate to={user ? "/staff" : "/"} replace />}

@@ -41,11 +41,18 @@ function NavBar() {
         <li>
           <Link to="/calendar">Calendar</Link>
         </li>
+
         {(user.role === "admin" || user.role === "reception") && (
-          <li>
-            <Link to="/appointments">Appointment Manager</Link>
-          </li>
+          <>
+            <li>
+              <Link to="/appointments">Appointment Manager</Link>
+            </li>
+            <li>
+              <Link to="/profile">Patient Profile</Link>
+            </li>
+          </>
         )}
+
         {user.role === "admin" && (
           <>
             <li>
@@ -56,6 +63,7 @@ function NavBar() {
             </li>
           </>
         )}
+
         <li>
           <Link to="/" onClick={signOut}>
             Sign Out

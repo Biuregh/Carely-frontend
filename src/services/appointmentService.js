@@ -1,8 +1,5 @@
 import { jsonFetch } from "./http.js";
 
-/**
- * List appointments from the backend with optional filters.
- */
 async function list({
   by,
   term,

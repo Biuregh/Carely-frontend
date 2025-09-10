@@ -6,7 +6,6 @@ const CheckInSuccess = () => {
   const msg = state?.message || "You are checked in!";
   const pid = state?.patientId;
 
-  // Persist patient id so /profile can load even after refresh
   useEffect(() => {
     if (pid) {
       try {

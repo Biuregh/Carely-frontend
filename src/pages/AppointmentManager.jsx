@@ -26,7 +26,6 @@ function toLocalISO(dateStr, timeHHmm) {
 }
 
 const AppointmentManager = () => {
-  // filters
   const [inputPatient, setInputPatient] = useState("");
   const [inputProviderId, setInputProviderId] = useState("ALL");
   const [fromDate, setFromDate] = useState(() =>
@@ -38,21 +37,18 @@ const AppointmentManager = () => {
     return d.toISOString().slice(0, 10);
   });
 
-  // applied filters
   const [appliedPatient, setAppliedPatient] = useState("");
   const [appliedProviderId, setAppliedProviderId] = useState("ALL");
   const [appliedFrom, setAppliedFrom] = useState(fromDate);
   const [appliedTo, setAppliedTo] = useState(toDate);
 
-  // data
   const [items, setItems] = useState([]);
   const [providers, setProviders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
-  const [view, setView] = useState("list"); // "list" | "calendar"
+  const [view, setView] = useState("list");
 
-  // load providers
   useEffect(() => {
     (async () => {
       try {
@@ -66,7 +62,6 @@ const AppointmentManager = () => {
           .sort((a, b) => a.name.localeCompare(b.name));
         setProviders(cleaned);
 
-        // validate current selection
         const ids = new Set(cleaned.map((p) => p.id));
         if (inputProviderId !== "ALL" && !ids.has(inputProviderId))
           setInputProviderId("ALL");
@@ -76,9 +71,8 @@ const AppointmentManager = () => {
         setProviders([]);
       }
     })();
-  }, []); // once
+  }, []);
 
-  // load appointments with applied filters
   async function load() {
     try {
       setLoading(true);
@@ -88,7 +82,6 @@ const AppointmentManager = () => {
       const by = term ? "patient" : undefined;
 
       const timeMin = toISODate(appliedFrom);
-      // timeMax should be exclusive; add one day to include the end date fully
       const timeMax = addDaysISO(toISODate(appliedTo), 1);
 
       const providerId =
@@ -112,14 +105,12 @@ const AppointmentManager = () => {
     }
   }
 
-  // initial load with defaults
   useEffect(() => {
-    load(); // eslint-disable-next-line react-hooks/exhaustive-deps
+    load();
   }, []);
 
-  // 🔁 auto-reload whenever applied filters change
   useEffect(() => {
-    load(); // eslint-disable-next-line react-hooks/exhaustive-deps
+    load();
   }, [appliedPatient, appliedProviderId, appliedFrom, appliedTo]);
 
   function onSearch(e) {
@@ -128,11 +119,8 @@ const AppointmentManager = () => {
     setAppliedProviderId(inputProviderId);
     setAppliedFrom(fromDate);
     setAppliedTo(toDate);
-    // Optional immediate fetch:
-    // load();
   }
 
-  // client-side extra guard filtering (optional)
   const filtered = useMemo(() => {
     const t = appliedPatient.trim().toLowerCase();
     return items.filter((a) => {

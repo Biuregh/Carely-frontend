@@ -9,13 +9,11 @@ const TYPES = [
 ];
 
 const CreateEvent = ({ providerId = "" }) => {
-  // basic fields
-  const [type, setType] = useState(""); // we’ll send as "reason"
+  const [type, setType] = useState("");
   const [date, setDate] = useState("");
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
 
-  // patient picker
   const [patientQuery, setPatientQuery] = useState("");
   const [patientResults, setPatientResults] = useState([]);
   const [patientId, setPatientId] = useState("");
@@ -98,7 +96,6 @@ const CreateEvent = ({ providerId = "" }) => {
           </select>
         </label>
 
-        {/* Patient picker */}
         <div style={{ border: "1px solid #eee", padding: 8, borderRadius: 8 }}>
           <strong>Patient (optional)</strong>
           <div style={{ display: "flex", gap: 8, marginTop: 8 }}>

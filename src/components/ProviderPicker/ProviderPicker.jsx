@@ -10,7 +10,6 @@ function ProviderPicker({ value, onChange, allowAll = false }) {
     let ignore = false;
 
     async function load() {
-      // provider users auto-select themselves
       if (user?.role === "provider") {
         onChange?.(user._id);
         return;

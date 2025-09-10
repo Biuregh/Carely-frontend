@@ -1,6 +1,5 @@
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
 
-// Reuse the token that Sign In / Sign Up stored in localStorage
 function authHeader() {
   const t = localStorage.getItem("token");
   return t ? { Authorization: `Bearer ${t}` } : {};
