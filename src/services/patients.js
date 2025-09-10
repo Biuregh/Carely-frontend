@@ -1,22 +1,42 @@
+import { api } from "./api.js";
+import { jsonFetch } from "./http.js";
 
-import { api } from './api.js';
+const checkIn = (payload) =>
+  api("/patients/checkin", { method: "POST", body: payload });
 
-// POST /patients/checkin
-const checkIn = async (payload) => {
-  console.log('checkIn payload:', payload);
-  return api('/patients/checkin', { method: 'POST', body: payload });
+const getPatient = (id) => api(`/patients/${id}`);
+const updatePatient = (id, update) =>
+  api(`/patients/${id}`, { method: "PUT", body: update });
+
+const createPatient = (payload) =>
+  jsonFetch("/patients", { method: "POST", body: payload });
+
+const getPatientAppointments = (id) => api(`/patients/${id}/appointments`);
+const schedulePatientAppointment = (id, payload) =>
+  api(`/patients/${id}/appointments`, { method: "POST", body: payload });
+
+const searchPatients = (params = {}) => {
+  const usp = new URLSearchParams(params);
+  return api(`/patients?${usp.toString()}`);
 };
 
-// GET /patients/:id
-const getPatient = async (id) => {
-  console.log('getPatient id:', id);
-  return api(`/patients/${id}`);
-};
+const deactivatePatient = (id) =>
+  api(`/patients/${id}/active`, { method: "PATCH", body: { active: false } });
 
-// PUT /patients/:id
-const updatePatient = async (id, update) => {
-  console.log('updatePatient id:', id, 'update:', update);
-  return api(`/patients/${id}`, { method: 'PUT', body: update });
-};
+const reactivatePatient = (id) =>
+  api(`/patients/${id}/active`, { method: "PATCH", body: { active: true } });
 
-export { checkIn, getPatient, updatePatient };
+const hardDeletePatient = (id) => api(`/patients/${id}`, { method: "DELETE" });
+
+export {
+  checkIn,
+  getPatient,
+  updatePatient,
+  createPatient,
+  getPatientAppointments,
+  schedulePatientAppointment,
+  searchPatients,
+  deactivatePatient,
+  reactivatePatient,
+  hardDeletePatient,
+};

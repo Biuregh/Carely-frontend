@@ -3,65 +3,47 @@ import logo from "../../assets/logo.png"; // adjust path if needed
 
 const NavBar = () => {
   return (
-    <nav className="w-full shadow">
-      {/* teal on the RIGHT → white on the LEFT */}
-      <div className="flex items-center justify-between px-6 py-3 bg-gradient-to-l from-teal-600 to-white">
-        {/* Left: Logo + Home */}
-        <div className="flex items-center gap-3">
-          <img src={logo} alt="Logo" className="h-20 w-20 object-contain" />
-          <NavLink
-            to="/"
-            className="text-teal-700 font-semibold hover:text-teal-900 transition text-lg"
-          >
-            Home
-          </NavLink>
-        </div>
+    <nav>
+      <ul>
+        <li>Welcome, {user.username}</li>
+        <li>
+          <Link to="/staff">Dashboard</Link>
+        </li>
+        <li>
+          <Link to="/agenda">Schedule</Link>
+        </li>
+        <li>
+          <Link to="/calendar">Calendar</Link>
+        </li>
 
-        {/* Right: links */}
-        <div className="flex items-center gap-6">
-          <NavLink
-            to="/sign-in"
-            className={({ isActive }) =>
-              `transition hover:text-teal-300 ${
-                isActive ? "text-teal-700 font-semibold" : "text-gray-700"
-              }`
-            }
-          >
-            Sign In
-          </NavLink>
-          <NavLink
-            to="/sign-up"
-            className={({ isActive }) =>
-              `transition hover:text-teal-300 ${
-                isActive ? "text-teal-700 font-semibold" : "text-gray-700"
-              }`
-            }
-          >
-            Sign Up
-          </NavLink>
-          <NavLink
-            to="/calendar"
-            className={({ isActive }) =>
-              `transition hover:text-teal-300 ${
-                isActive ? "text-teal-700 font-semibold" : "text-gray-700"
-              }`
-            }
-          >
-            Calendar
-          </NavLink>
-          {/* NEW: Patient Profile link */}
-          <NavLink
-            to="/profile"
-            className={({ isActive }) =>
-              `transition hover:text-teal-300 ${
-                isActive ? "text-teal-700 font-semibold" : "text-gray-700"
-              }`
-            }
-          >
-            Patient Profile
-          </NavLink>
-        </div>
-      </div>
+        {(user.role === "admin" || user.role === "reception") && (
+          <>
+            <li>
+              <Link to="/appointments">Appointment Manager</Link>
+            </li>
+            <li>
+              <Link to="/profile">Patient Profile</Link>
+            </li>
+          </>
+        )}
+
+        {user.role === "admin" && (
+          <>
+            <li>
+              <Link to="/admin/users">Admin · Users</Link>
+            </li>
+            <li>
+              <Link to="/home">Clinic Google</Link>
+            </li>
+          </>
+        )}
+
+        <li>
+          <Link to="/" onClick={signOut}>
+            Sign Out
+          </Link>
+        </li>
+      </ul>
     </nav>
   );
 };

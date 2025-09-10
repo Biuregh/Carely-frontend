@@ -1,22 +1,34 @@
+import { useEffect } from "react";
+import { useLocation, Link } from "react-router";
 
-import { useLocation, Link } from 'react-router-dom'
+const CheckInSuccess = () => {
+  const { state } = useLocation() || {};
+  const msg = state?.message || "You are checked in!";
+  const pid = state?.patientId;
 
-export default function CheckInSuccess(){
-  const { state } = useLocation() || {}
-  const msg = state?.message || 'You are checked in!'
-  const pid = state?.patientId
+  useEffect(() => {
+    if (pid) {
+      try {
+        localStorage.setItem("patientId", String(pid));
+      } catch {}
+    }
+  }, [pid]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-3xl bg-white shadow rounded p-20">
-          <h2 className="text-2xl font-semibold text-teal-600 mb-4">Check-in Complete</h2>
-          <p className="sub">{msg}</p>
-          {pid && <p className="note">Patient ID: {pid}</p>}
-          <div className="row">
-            <Link className="btn secondary" to="/">New Check-in</Link>
-            <Link className="btn" to="/profile">Go to My Profile</Link>
-          </div>
+    <div className="card">
+      <h2>Check-in Complete</h2>
+      <p className="sub">{msg}</p>
+      {pid && <p className="note">Patient ID: {pid}</p>}
+      <div className="row">
+        <Link className="btn secondary" to="/">
+          New Check-in
+        </Link>
+        <Link className="btn" to="/profile">
+          Go to My Profile
+        </Link>
       </div>
     </div>
-  )
-}
+  );
+};
+
+export default CheckInSuccess;

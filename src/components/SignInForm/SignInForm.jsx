@@ -29,7 +29,7 @@ const SignInForm = () => {
       };
       const signedInUser = await signIn(payload);
       setUser(signedInUser);
-      navigate("/");
+      navigate("/staff");
     } catch (err) {
       setMessage(err.message);
     }

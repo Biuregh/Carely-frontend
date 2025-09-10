@@ -52,13 +52,10 @@ function BootstrapAdmin() {
       try {
         const payload = JSON.parse(atob(token.split(".")[1])).payload;
         setUser(payload);
-      } catch {
-        // ignore decode errors, user will be reloaded on refresh
-      }
+      } catch {}
 
       setMsg("Admin bootstrapped. You are now signed in.");
-      setIsError(false);
-      navigate("/");
+      navigate("/staff");
     } catch (err) {
       setMsg(err.message || "Failed to bootstrap admin.");
       setIsError(true);
