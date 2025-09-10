@@ -4,6 +4,8 @@
 @tailwind utilities;
 
 
+
+
 :root {
   --mint:#7fb6b0;
   --mint-2:#a7cbc7;
@@ -230,3 +232,4 @@ nav ul li:first-child {
   margin-right: auto; 
   font-style: italic;
 }
+

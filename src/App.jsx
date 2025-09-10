@@ -1,15 +1,15 @@
 
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useContext } from 'react'
 import { Routes, Route, NavLink, useNavigate } from 'react-router-dom'
 import * as patientsService from './services/patients.js'
 import CheckIn from './pages/CheckIn.jsx'
 import CheckInSuccess from './pages/CheckInSuccess.jsx'
 import PatientProfile from './pages/PatientProfile.jsx'
-import logo from './assets/logo.png'
+// import logo from './assets/logo.png'
 
-import { Routes, Route } from "react-router";
-import { useContext } from "react";
+// import { Routes, Route } from "react-router";
+// import { useContext } from "react";
 
 import Home from "./pages/Home.jsx";
 import Connected from "./pages/Connected.jsx";

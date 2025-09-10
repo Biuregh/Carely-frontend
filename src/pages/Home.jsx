@@ -20,9 +20,15 @@ function Home() {
   };
 
   return (
-    <div style={{ padding: 16 }}>
-      <h1>Clinic Google Connection</h1>
-      <button onClick={connectClinic}>Connect Clinic Google</button>
+     <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="w-full max-w-3xl bg-white shadow rounded p-20">
+        <h2 className="text-2xl font-semibold text-teal-600 mb-4">Clinic Google Connection</h2>
+        <button
+              type="button"
+              className="bg-teal-600 text-white rounded px-4 py-2 hover:bg-teal-700 transition-colors"
+              onClick={() => props.loadPatient?.()}
+            >Connect Clinic Google</button>
+      </div>
     </div>
   );
 }

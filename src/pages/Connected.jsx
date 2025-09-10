@@ -14,11 +14,13 @@ function Connected() {
   }, [providerId]);
 
   return (
-    <div style={{ padding: 16 }}>
-      <h2>Schedule Appointments</h2>
-      <ProviderPicker value={providerId} onChange={setProviderId} />
-      <CreateEvent providerId={providerId} />
-      <Agenda providerId={providerId} />
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="w-full max-w-3xl bg-white shadow rounded p-20">
+          <h2 className="text-2xl font-semibold text-teal-600 mb-4">Schedule Appointments</h2>
+          <ProviderPicker value={providerId} onChange={setProviderId} />
+          <CreateEvent providerId={providerId} />
+          <Agenda providerId={providerId} />
+      </div>
     </div>
   );
 }
