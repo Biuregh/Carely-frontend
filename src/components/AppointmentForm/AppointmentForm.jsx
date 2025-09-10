@@ -45,9 +45,9 @@ const AppointmentForm = ({ patient }) => {
       await schedulePatientAppointment(patient._id || patient.id, {
         providerId,
         date,
-        start, // "HH:mm"
-        end, // "HH:mm"
-        reason: type, // optional; we store it as "reason"
+        start,
+        end,
+        reason: type,
       });
       setMessage("Appointment scheduled successfully.");
       setType("");
