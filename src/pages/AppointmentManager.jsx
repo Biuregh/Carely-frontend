@@ -151,11 +151,9 @@ const AppointmentManager = () => {
   async function onReschedule(appt, form) {
     try {
       await reschedule(appt.id, {
-        // backend accepts startISO/endISO; this avoids TZ issues
         startISO: toLocalISO(form.date, form.start),
         endISO: toLocalISO(form.date, form.end),
       });
-      // optimistic update
       setItems((prev) =>
         prev.map((a) =>
           a.id === appt.id
