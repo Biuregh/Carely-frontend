@@ -14,7 +14,7 @@
 
 *{box-sizing:border-box}
 
-.nav a {
+/* .nav a {
   margin-left:16px;
   color:var(--muted);
   text-decoration:none
@@ -23,7 +23,7 @@
 .nav a.active { 
   color:var(--mint);
   font-weight:600
-}
+} */
 
 body {
   margin:0;
@@ -188,13 +188,13 @@ button {
   font-size:12px
 }
 
-nav {
+/* nav {
   background-color: #0d9488;
   padding: 0.75rem 1.5rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
+} */
 
-nav ul {
+/* nav ul {
   display: flex;
   justify-content: flex-end;
   gap: 1.5rem;
@@ -222,5 +222,5 @@ nav ul li a:hover {
 nav ul li:first-child {
   margin-right: auto; 
   font-style: italic;
-}
+} */
 

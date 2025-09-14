@@ -223,7 +223,7 @@ function CalendarPage() {
 return (
   <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
     {/* Page title */}
-    <h2 className="text-2xl font-semibold text-teal-600 text-center">Calendar</h2>
+    <h2 className="text-2xl font-semibold text-teal-600 mb-4 text-center">Calendar</h2>
 
     {/* Provider picker card */}
     <div className="flex justify-center">

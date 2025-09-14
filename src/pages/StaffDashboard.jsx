@@ -106,85 +106,89 @@ export default function StaffDashboard() {
   }
 
   return (
-    <main style={{ padding: 16, maxWidth: 800 }}>
-      <h2 style={{ marginBottom: 8 }}>Staff Dashboard</h2>
+  <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <div className="w-full max-w-5xl bg-white shadow rounded-lg p-6 md:p-8">
+      {/* Title */}
+      <h2 className="text-2xl font-semibold text-teal-600 mb-6 text-center">
+        Staff Dashboard
+      </h2>
 
-      <section style={{ marginTop: 12 }}>
-        <h3 style={{ marginBottom: 8 }}>New Patient</h3>
+      {/* New Patient */}
+      <section className="mb-10">
+        <h3 className="text-lg font-semibold text-gray-800 mb-3">New Patient</h3>
 
         {msg && (
           <div
-            style={{
-              marginBottom: 10,
-              padding: 8,
-              border: "1px solid #ddd",
-              background: "#f7f7f7",
-            }}
+            className="mb-4 rounded border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-700"
+            role="alert"
           >
             {msg}
           </div>
         )}
 
-        <div style={{ display: "grid", gap: 8, maxWidth: 640 }}>
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}
-          >
+        <div className="space-y-4 max-w-2xl">
+          {/* Row 1 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input
               placeholder="Full Name"
               value={form.name}
               onChange={(e) => set("name", e.target.value)}
+              className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
             <input
               placeholder="Email"
               type="email"
               value={form.email}
               onChange={(e) => set("email", e.target.value)}
+              className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
           </div>
 
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}
-          >
+          {/* Row 2 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input
-              placeholder="mm/dd/yyyy"
               type="date"
               value={form.dob}
               onChange={(e) => set("dob", e.target.value)}
+              className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
             <input
               placeholder="Phone"
               value={form.phone}
               onChange={(e) => set("phone", e.target.value)}
+              className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
           </div>
 
+          {/* Notes */}
           <textarea
             placeholder="Notes (optional)"
             value={form.notes}
             onChange={(e) => set("notes", e.target.value)}
+            className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
+
+          {/* Allergies */}
           <input
             placeholder="Allergies (comma separated)"
             value={form.allergies}
             onChange={(e) => set("allergies", e.target.value)}
+            className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
+
+          {/* Medication */}
           <input
             placeholder="Medication (comma separated)"
             value={form.medication}
             onChange={(e) => set("medication", e.target.value)}
+            className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
 
+          {/* Button */}
           <button
             onClick={createPatient}
             disabled={saving}
-            style={{
-              width: 160,
-              background: "#2f9e8f",
-              color: "white",
-              borderRadius: 8,
-              padding: "8px 12px",
-              border: "none",
-            }}
+            className="w-40 rounded bg-teal-600 px-4 py-2 text-white hover:bg-teal-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {saving ? "Creating…" : "Create Patient"}
           </button>
@@ -192,21 +196,16 @@ export default function StaffDashboard() {
       </section>
 
       {/* TODAY'S AGENDA */}
-      <section style={{ marginTop: 24 }}>
-        <h3 style={{ marginBottom: 8 }}>Today&apos;s Agenda</h3>
+      <section>
+        <h3 className="text-lg font-semibold text-gray-800 mb-3">
+          Today&apos;s Agenda
+        </h3>
 
-        <div
-          style={{
-            display: "flex",
-            gap: 8,
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}
-        >
+        <div className="flex flex-wrap gap-3 items-center mb-4">
           <select
             value={providerId}
             onChange={(e) => setProviderId(e.target.value)}
-            style={{ minWidth: 220 }}
+            className="min-w-[220px] rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
           >
             {providers.map((p) => (
               <option key={p.id} value={p.id}>
@@ -219,34 +218,29 @@ export default function StaffDashboard() {
             type="date"
             value={day}
             onChange={(e) => setDay(e.target.value)}
+            className="rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
 
           <button
             onClick={refreshAgenda}
             disabled={loadingAgenda || !providerId}
-            style={{
-              background: "#2f9e8f",
-              color: "white",
-              borderRadius: 8,
-              padding: "8px 12px",
-              border: "none",
-            }}
+            className="rounded bg-teal-600 px-4 py-2 text-white hover:bg-teal-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {loadingAgenda ? "Loading…" : "Refresh"}
           </button>
         </div>
 
         {agendaErr && (
-          <div style={{ color: "crimson", marginTop: 8 }}>{agendaErr}</div>
+          <div className="text-red-600 text-sm mb-3">{agendaErr}</div>
         )}
 
-        <ul style={{ marginTop: 12, paddingLeft: 16 }}>
+        <ul className="list-disc pl-5 space-y-2 text-gray-700">
           {agenda.length === 0 && <li>No events for selected day.</li>}
           {agenda.map((ev) => {
             const start = ev.start?.dateTime || ev.start?.date || "";
             const end = ev.end?.dateTime || ev.end?.date || "";
             return (
-              <li key={ev.id} style={{ marginBottom: 6 }}>
+              <li key={ev.id}>
                 <strong>{ev.summary || "(no title)"}</strong> —{" "}
                 {new Date(start).toLocaleString()} →{" "}
                 {new Date(end).toLocaleString()}
@@ -255,6 +249,7 @@ export default function StaffDashboard() {
           })}
         </ul>
       </section>
-    </main>
-  );
+    </div>
+  </div>
+);
 }

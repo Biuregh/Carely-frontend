@@ -63,13 +63,23 @@ const AppointmentForm = ({ patient }) => {
   };
 
   return (
-    <div className="box">
-      <h3 className="title">Appointment Details</h3>
-      {!patient && <p className="hint">Please search for a patient first</p>}
+  <div className="bg-white border rounded p-4 md:p-6">
+    <h3 className="text-lg font-semibold text-teal-600 mb-4 text-center">
+      Appointment Details
+    </h3>
 
-      <label className="label">Type</label>
+    {!patient && (
+      <p className="text-sm text-gray-500 mb-4 text-center">
+        Please search for a patient first
+      </p>
+    )}
+
+    <div className="mb-4">
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        Type
+      </label>
       <select
-        className="input"
+        className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
         value={type}
         onChange={(e) => setType(e.target.value)}
       >
@@ -80,10 +90,14 @@ const AppointmentForm = ({ patient }) => {
           </option>
         ))}
       </select>
+    </div>
 
-      <label className="label">Doctor</label>
+    <div className="mb-4">
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        Doctor
+      </label>
       <select
-        className="input"
+        className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
         value={providerId}
         onChange={(e) => setProviderId(e.target.value)}
       >
@@ -94,47 +108,58 @@ const AppointmentForm = ({ patient }) => {
           </option>
         ))}
       </select>
+    </div>
 
-      <label className="label">Date</label>
+    <div className="mb-4">
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        Date
+      </label>
       <input
-        className="input"
         type="date"
         value={date}
         onChange={(e) => setDate(e.target.value)}
+        className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
       />
-
-      <div className="row" style={{ display: "flex", gap: 8 }}>
-        <label className="label" style={{ flex: 1 }}>
-          Start
-          <input
-            className="input"
-            type="time"
-            value={start}
-            onChange={(e) => setStart(e.target.value)}
-          />
-        </label>
-        <label className="label" style={{ flex: 1 }}>
-          End
-          <input
-            className="input"
-            type="time"
-            value={end}
-            onChange={(e) => setEnd(e.target.value)}
-          />
-        </label>
-      </div>
-
-      <button
-        className="btnPrimary"
-        disabled={!canSchedule || saving}
-        onClick={onSchedule}
-      >
-        {saving ? "Scheduling..." : "Schedule Appointment"}
-      </button>
-
-      {message && <p className="hint">{message}</p>}
     </div>
-  );
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Start
+        </label>
+        <input
+          type="time"
+          value={start}
+          onChange={(e) => setStart(e.target.value)}
+          className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          End
+        </label>
+        <input
+          type="time"
+          value={end}
+          onChange={(e) => setEnd(e.target.value)}
+          className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+        />
+      </div>
+    </div>
+
+    <button
+      disabled={!canSchedule || saving}
+      onClick={onSchedule}
+      className="w-full bg-teal-600 text-white rounded px-4 py-2 hover:bg-teal-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+    >
+      {saving ? "Scheduling..." : "Schedule Appointment"}
+    </button>
+
+    {message && (
+      <p className="text-sm text-gray-500 mt-3 text-center">{message}</p>
+    )}
+  </div>
+);return
 };
 
 export default AppointmentForm;

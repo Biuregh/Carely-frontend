@@ -23,18 +23,28 @@ const Dashboard = () => {
   }, [user]);
 
   return (
-    <main>
-      <h1>Welcome, {user.username}</h1>
-      <p>
+  <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="w-full max-w-3xl bg-white shadow rounded-lg p-6 md:p-8">
+      <h1 className="text-2xl font-semibold text-teal-600 mb-4 text-center">
+        Welcome, {user.username}
+      </h1>
+      <p className="text-gray-600 text-sm mb-6 text-center">
         This is the dashboard page where you can see a list of all the users.
       </p>
-      <ul>
+
+      <ul className="space-y-2">
         {users.map((user) => (
-          <li key={user._id}>{user.username}</li>
+          <li
+            key={user._id}
+            className="border rounded px-4 py-2 bg-gray-50 text-gray-800 hover:bg-gray-100 transition-colors"
+          >
+            {user.username}
+          </li>
         ))}
       </ul>
-    </main>
-  );
+    </div>
+  </div>
+);
 };
 
 export default Dashboard;

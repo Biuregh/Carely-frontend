@@ -26,7 +26,7 @@ export default function PatientQuickCreate({ onCreated }) {
       const payload = {
         name: form.name.trim(),
         email: form.email.trim(),
-        dob: form.dob, // "YYYY-MM-DD"
+        dob: form.dob, 
         phone: form.phone.trim(),
         notes: form.notes.trim(),
         allergies: form.allergies
@@ -45,7 +45,7 @@ export default function PatientQuickCreate({ onCreated }) {
       const p = await createPatient(payload);
       setMsg("Patient created.");
       onCreated?.(p);
-      // hop straight to profile for editing
+      
       navigate("/profile", { state: { patientId: p?._id } });
     } catch (e) {
       setMsg(e.message || "Failed to create patient.");
@@ -55,67 +55,76 @@ export default function PatientQuickCreate({ onCreated }) {
   }
 
   return (
-    <form onSubmit={submit} style={{ display: "grid", gap: 8, maxWidth: 720 }}>
-      {msg && (
-        <div
-          style={{
-            background: "#f8f8f8",
-            border: "1px solid #ddd",
-            padding: 8,
-          }}
-        >
-          {msg}
-        </div>
-      )}
-
-      <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr" }}>
-        <input
-          placeholder="Full Name"
-          value={form.name}
-          onChange={(e) => set("name", e.target.value)}
-          required
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          value={form.email}
-          onChange={(e) => set("email", e.target.value)}
-          required
-        />
-        <input
-          type="date"
-          placeholder="DOB"
-          value={form.dob}
-          onChange={(e) => set("dob", e.target.value)}
-          required
-        />
-        <input
-          placeholder="Phone"
-          value={form.phone}
-          onChange={(e) => set("phone", e.target.value)}
-          required
-        />
+  <form onSubmit={submit} className="space-y-4 max-w-2xl">
+    
+    {msg && (
+      <div className="rounded border border-gray-200 bg-gray-50 text-gray-700 text-sm px-3 py-2">
+        {msg}
       </div>
+    )}
 
-      <textarea
-        placeholder="Notes (optional)"
-        value={form.notes}
-        onChange={(e) => set("notes", e.target.value)}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <input
+        placeholder="Full Name"
+        value={form.name}
+        onChange={(e) => set("name", e.target.value)}
+        required
+        className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
       />
       <input
-        placeholder="Allergies (comma separated)"
-        value={form.allergies}
-        onChange={(e) => set("allergies", e.target.value)}
+        type="email"
+        placeholder="Email"
+        value={form.email}
+        onChange={(e) => set("email", e.target.value)}
+        required
+        className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
       />
       <input
-        placeholder="Medication (comma separated)"
-        value={form.medication}
-        onChange={(e) => set("medication", e.target.value)}
+        type="date"
+        placeholder="DOB"
+        value={form.dob}
+        onChange={(e) => set("dob", e.target.value)}
+        required
+        className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
       />
+      <input
+        placeholder="Phone"
+        value={form.phone}
+        onChange={(e) => set("phone", e.target.value)}
+        required
+        className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+      />
+    </div>
 
-      <div style={{ display: "flex", gap: 8 }}>
-        <button disabled={busy}>{busy ? "Saving…" : "Create Patient"}</button>
-      </div>
-    </form>
-  );
+    <textarea
+      placeholder="Notes (optional)"
+      value={form.notes}
+      onChange={(e) => set("notes", e.target.value)}
+      className="w-full min-h-24 rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+    />
+
+    <input
+      placeholder="Allergies (comma separated)"
+      value={form.allergies}
+      onChange={(e) => set("allergies", e.target.value)}
+      className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+    />
+
+    <input
+      placeholder="Medication (comma separated)"
+      value={form.medication}
+      onChange={(e) => set("medication", e.target.value)}
+      className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+    />
+
+    <div className="flex gap-2">
+      <button
+        disabled={busy}
+        className="px-4 py-2 rounded bg-teal-600 text-white hover:bg-teal-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        {busy ? "Saving…" : "Create Patient"}
+      </button>
+    </div>
+  </form>
+);
 }

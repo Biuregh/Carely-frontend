@@ -65,100 +65,102 @@ function BootstrapAdmin() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-3xl bg-white shadow rounded-lg p-8 md:p-10">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-800">Bootstrap Admin</h1>
-          <p className="mt-1 text-sm text-gray-600">
-            This is a one-time setup to create the first admin user.
-          </p>
+  <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <div className="w-full max-w-3xl bg-white shadow rounded-lg p-6 md:p-8">
+      {/* Heading */}
+      <h1 className="text-2xl font-semibold text-teal-600 mb-2 text-center">
+        Bootstrap Admin
+      </h1>
+      <p className="text-sm text-gray-600 mb-6 text-center">
+        This is a one-time setup to create the first admin user.
+      </p>
+
+      {/* Message */}
+      {msg && (
+        <div
+          className={`mb-6 rounded border px-4 py-3 text-sm ${
+            isError
+              ? "border-red-200 bg-red-50 text-red-700"
+              : "border-teal-200 bg-teal-50 text-teal-700"
+          }`}
+          role="alert"
+        >
+          {msg}
         </div>
+      )}
 
-        {msg && (
-          <div
-            className={`mb-6 rounded-md border px-4 py-3 text-sm ${
-              isError
-                ? "border-red-200 bg-red-50 text-red-700"
-                : "border-teal-200 bg-teal-50 text-teal-700"
-            }`}
-            role="alert"
+      {/* Form */}
+      <form onSubmit={onSubmit} className="grid gap-4 max-w-lg mx-auto">
+        {/* Email */}
+        <input
+          id="username"
+          type="email"
+          name="username"
+          value={form.username}
+          onChange={onChange}
+          placeholder="Email (e.g., admin@example.com)"
+          required
+          className="w-full rounded border border-gray-300 px-3 py-2 
+                     focus:outline-none focus:ring-2 focus:ring-teal-500"
+          autoComplete="username"
+        />
+
+        {/* Password */}
+        <input
+          id="password"
+          type={form.showPassword ? "text" : "password"}
+          name="password"
+          value={form.password}
+          onChange={onChange}
+          placeholder="Password (e.g., Passw0rd!)"
+          required
+          className="w-full rounded border border-gray-300 px-3 py-2 
+                     focus:outline-none focus:ring-2 focus:ring-teal-500"
+          autoComplete="new-password"
+        />
+
+        {/* Show password */}
+        <label className="inline-flex items-center gap-2 text-sm text-gray-700 select-none">
+          <input
+            type="checkbox"
+            name="showPassword"
+            checked={form.showPassword}
+            onChange={onChange}
+            className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+          />
+          Show password
+        </label>
+
+        {/* Actions */}
+        <div className="flex flex-wrap gap-3 pt-2">
+          <button
+            type="submit"
+            disabled={submitting}
+            className={`inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium text-white 
+                        focus:outline-none focus:ring-2 focus:ring-teal-500
+                        ${submitting ? "bg-teal-400 cursor-not-allowed" : "bg-teal-600 hover:bg-teal-700"}`}
           >
-            {msg}
-          </div>
-        )}
+            {submitting ? "Creating…" : "Create Admin"}
+          </button>
 
-        <form onSubmit={onSubmit} className="grid gap-5">
-          <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              id="username"
-              type="email"
-              name="username"
-              value={form.username}
-              onChange={onChange}
-              placeholder="admin@example.com"
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500"
-              autoComplete="username"
-            />
-          </div>
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium 
+                       bg-gray-100 text-gray-800 hover:bg-gray-200 
+                       focus:outline-none focus:ring-2 focus:ring-gray-300"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <input
-              id="password"
-              type={form.showPassword ? "text" : "password"}
-              name="password"
-              value={form.password}
-              onChange={onChange}
-              placeholder="Passw0rd!"
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500"
-              autoComplete="new-password"
-            />
-          </div>
-
-          <label className="inline-flex items-center gap-2 text-sm text-gray-700 select-none">
-            <input
-              type="checkbox"
-              name="showPassword"
-              checked={form.showPassword}
-              onChange={onChange}
-              className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
-            />
-            Show password
-          </label>
-
-          <div className="flex flex-wrap gap-3 pt-2">
-            <button
-              type="submit"
-              disabled={submitting}
-              className={`inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2
-                ${submitting ? "bg-teal-400 cursor-not-allowed" : "bg-teal-600 hover:bg-teal-700"}`}
-            >
-              {submitting ? "Creating…" : "Create Admin"}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => navigate("/")}
-              className="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-
-        <p className="mt-6 text-xs text-gray-500">
-          If an admin already exists, this will return an error. Use the Sign In page instead.
-        </p>
-      </div>
+      <p className="mt-6 text-xs text-gray-500 text-center">
+        If an admin already exists, this will return an error. Use the Sign In page instead.
+      </p>
     </div>
-  );
+  </div>
+);
 }
 
 export default BootstrapAdmin;
