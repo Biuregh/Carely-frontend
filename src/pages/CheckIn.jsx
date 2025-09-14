@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom"; // safer in web apps
 import { checkIn } from "../services/patients.js";
 
 const CheckIn = () => {
@@ -23,7 +23,12 @@ const CheckIn = () => {
     e.preventDefault();
     if (!allFilled) return;
     try {
-      const res = await checkIn(form);
+      const res = await checkIn({
+        ...form,
+        fullName: form.fullName.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+      });
       navigate("/checkin/success", {
         state: {
           message: res?.message || "You are checked in!",
@@ -37,7 +42,7 @@ const CheckIn = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md bg-white shadow rounded-lg p-6">
         <h2 className="text-2xl font-semibold text-teal-600 mb-4 text-center">
           Patient Check-in
@@ -45,6 +50,7 @@ const CheckIn = () => {
         <p className="text-gray-600 text-sm mb-6 text-center">
           Fill in your basic information to notify reception of your arrival.
         </p>
+
         <form onSubmit={submit} className="space-y-4">
           <input
             className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
@@ -52,39 +58,50 @@ const CheckIn = () => {
             value={form.fullName}
             onChange={(e) => set("fullName", e.target.value)}
           />
+
+       
           <input
             className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            type="text"
             placeholder="Date of Birth (YYYY-MM-DD)"
             value={form.dob}
             onChange={(e) => set("dob", e.target.value)}
+            pattern="\d{4}-\d{2}-\d{2}"
+            title="Use format YYYY-MM-DD"
           />
+
           <input
             className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
             type="email"
             placeholder="Email"
             value={form.email}
             onChange={(e) => set("email", e.target.value)}
+            autoComplete="email"
           />
+
           <input
             className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
             placeholder="Phone Number"
             value={form.phone}
             onChange={(e) => set("phone", e.target.value)}
           />
+
           <div className="bg-gray-50 text-sm text-gray-600 border rounded p-3">
-            Reception will be notified immediately upon check-in, and
-            you&apos;ll receive an email confirmation.
+            Reception will be notified immediately upon check-in, and you&apos;ll receive an email confirmation.
           </div>
+
           <button
             type="submit"
             disabled={!allFilled}
-            className="w-full bg-teal-600 text-white rounded px-4 py-2 hover:bg-teal-700 transition-colors"
+            className="w-full bg-teal-600 text-white rounded px-4 py-2 hover:bg-teal-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             Check In
           </button>
-          <p className="text-xs text-center text-gray-500">
-            * All fields are required
-          </p>
+
+          <p className="text-xs text-center text-gray-500">* All fields are required</p>
         </form>
       </div>
     </div>

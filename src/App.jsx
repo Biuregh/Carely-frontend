@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useContext } from "react";
 
 import Home from "./pages/Home.jsx";
@@ -24,9 +24,13 @@ export default function App() {
   const { user } = useContext(UserContext);
 
   return (
-    <div>
-      <NavBar />
-      <main>
+    <div className="min-h-screen bg-gray-50">
+     
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-gray-200">
+        <NavBar />
+      </header>
+
+      <main className="mx-auto max-w-6xl px-4 py-6">
         <Routes>
           <Route path="/" element={<CheckIn />} />
           <Route path="/checkin/success" element={<CheckInSuccess />} />
@@ -40,10 +44,12 @@ export default function App() {
               </RequireRole>
             }
           />
+
           <Route path="/home" element={<Home />} />
           <Route path="/connected" element={<Connected />} />
           <Route path="/agenda" element={<Connected />} />
           <Route path="/calendar" element={<CalendarPage />} />
+
           <Route
             path="/appointments"
             element={
@@ -55,6 +61,7 @@ export default function App() {
 
           <Route path="/sign-up" element={<SignUpForm />} />
           <Route path="/sign-in" element={<SignInForm />} />
+
           <Route
             path="/admin/users"
             element={
@@ -63,6 +70,7 @@ export default function App() {
               </RequireRole>
             }
           />
+
           <Route path="/bootstrap-admin" element={<BootstrapAdmin />} />
 
           <Route
@@ -71,6 +79,10 @@ export default function App() {
           />
         </Routes>
       </main>
+
+      <footer className="mt-10 mb-6 text-center text-xs text-gray-400">
+        © {new Date().getFullYear()} Carely
+      </footer>
     </div>
   );
 }

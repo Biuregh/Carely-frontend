@@ -220,148 +220,154 @@ function CalendarPage() {
     refetchCalendar();
   }, [providerId]);
 
-  return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gap: 12 }}>
-      <h2>Calendar</h2>
+return (
+  <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+    {/* Page title */}
+    <h2 className="text-2xl font-semibold text-teal-600 mb-4 text-center">Calendar</h2>
 
-      <ProviderPicker value={providerId} onChange={setProviderId} allowAll />
+    {/* Provider picker card */}
+    <div className="flex justify-center">
+      <div className="bg-white border border-gray-200 rounded-lg shadow p-4 w-full max-w-3xl">
+        <ProviderPicker value={providerId} onChange={setProviderId} allowAll />
+      </div>
+    </div>
 
-      <FullCalendar
-        ref={calRef}
-        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-        initialView="timeGridWeek"
-        headerToolbar={{
-          left: "prev,next today",
-          center: "title",
-          right: "dayGridMonth,timeGridWeek,timeGridDay",
-        }}
-        editable={true}
-        selectable={false}
-        eventOverlap={true}
-        events={fetchGoogleRange}
-        eventDrop={onEventDropResize}
-        eventResize={onEventDropResize}
-        eventClick={onEventClick}
-        height="auto"
-      />
+    {/* Calendar card */}
+    <div className="flex justify-center">
+      <div className="bg-white border border-gray-200 rounded-lg shadow p-2 md:p-4 w-full max-w-5xl">
+        <FullCalendar
+          ref={calRef}
+          className="fc-teal"
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          initialView="timeGridWeek"
+          headerToolbar={{
+            left: "prev,next today",
+            center: "title",
+            right: "dayGridMonth,timeGridWeek,timeGridDay",
+          }}
+          editable
+          selectable={false}
+          eventOverlap
+          events={fetchGoogleRange}
+          eventDrop={onEventDropResize}
+          eventResize={onEventDropResize}
+          eventClick={onEventClick}
+          height="auto"
+        />
+      </div>
+    </div>
 
-      {panelOpen && (
-        <div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              gap: 12,
-            }}
+    {/* Edit panel */}
+    {panelOpen && (
+      <div className="bg-white border border-gray-200 rounded-lg shadow p-6 space-y-4 max-w-3xl mx-auto">
+        <div className="flex items-center justify-between gap-3">
+          <strong className="text-teal-700">Edit Appointment</strong>
+          <button
+            onClick={() => setPanelOpen(false)}
+            disabled={busy}
+            className="px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-800 transition disabled:opacity-60"
           >
-            <strong>Edit Appointment</strong>
-            <button onClick={() => setPanelOpen(false)} disabled={busy}>
-              Close
+            Close
+          </button>
+        </div>
+
+        <div className="grid gap-4">
+          <label className="grid gap-1">
+            <span className="text-sm text-gray-600">Title</span>
+            <input
+              type="text"
+              value={form.summary}
+              onChange={(e) => setForm((f) => ({ ...f, summary: e.target.value }))}
+              className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </label>
+
+          <label className="grid gap-1">
+            <span className="text-sm text-gray-600">Notes (optional)</span>
+            <textarea
+              value={form.description}
+              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              rows={3}
+              className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </label>
+
+          <label className="grid gap-1">
+            <span className="text-sm text-gray-600">Location (optional)</span>
+            <input
+              type="text"
+              value={form.location}
+              onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
+              className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </label>
+
+          <label className="inline-flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={form.changeTime}
+              onChange={(e) => setForm((f) => ({ ...f, changeTime: e.target.checked }))}
+              className="h-4 w-4 accent-teal-600"
+            />
+            <span className="text-sm text-gray-700">Change time?</span>
+          </label>
+
+          <div className={`flex flex-wrap gap-3 items-center ${form.changeTime ? "" : "opacity-60"}`}>
+            <label className="grid gap-1">
+              <span className="text-sm text-gray-600">Date</span>
+              <input
+                type="date"
+                value={form.date}
+                onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
+                disabled={!form.changeTime}
+                className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:bg-gray-50"
+              />
+            </label>
+
+            <label className="grid gap-1">
+              <span className="text-sm text-gray-600">Start</span>
+              <input
+                type="time"
+                value={form.start}
+                onChange={(e) => setForm((f) => ({ ...f, start: e.target.value }))}
+                disabled={!form.changeTime}
+                className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:bg-gray-50"
+              />
+            </label>
+
+            <label className="grid gap-1">
+              <span className="text-sm text-gray-600">End</span>
+              <input
+                type="time"
+                value={form.end}
+                onChange={(e) => setForm((f) => ({ ...f, end: e.target.value }))}
+                disabled={!form.changeTime}
+                className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:bg-gray-50"
+              />
+            </label>
+          </div>
+
+          <div className="flex gap-3 mt-2">
+            <button
+              onClick={handleSave}
+              disabled={busy}
+              className="px-4 py-2 rounded bg-teal-600 hover:bg-teal-700 text-white transition disabled:opacity-60"
+            >
+              Save
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={busy}
+              className="px-4 py-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-800 transition disabled:opacity-60"
+            >
+              Delete
             </button>
           </div>
-
-          <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
-            <label>
-              Title
-              <input
-                type="text"
-                value={form.summary}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, summary: e.target.value }))
-                }
-              />
-            </label>
-
-            <label>
-              Notes (optional)
-              <textarea
-                value={form.description}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, description: e.target.value }))
-                }
-              />
-            </label>
-
-            <label>
-              Location (optional)
-              <input
-                type="text"
-                value={form.location}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, location: e.target.value }))
-                }
-              />
-            </label>
-
-            <label
-              style={{ display: "inline-flex", gap: 8, alignItems: "center" }}
-            >
-              <input
-                type="checkbox"
-                checked={form.changeTime}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, changeTime: e.target.checked }))
-                }
-              />
-              Change time?
-            </label>
-
-            <div
-              style={{
-                display: "flex",
-                gap: 8,
-                alignItems: "center",
-                opacity: form.changeTime ? 1 : 0.6,
-              }}
-            >
-              <label>
-                Date
-                <input
-                  type="date"
-                  value={form.date}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, date: e.target.value }))
-                  }
-                  disabled={!form.changeTime}
-                />
-              </label>
-              <label>
-                Start
-                <input
-                  type="time"
-                  value={form.start}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, start: e.target.value }))
-                  }
-                  disabled={!form.changeTime}
-                />
-              </label>
-              <label>
-                End
-                <input
-                  type="time"
-                  value={form.end}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, end: e.target.value }))
-                  }
-                  disabled={!form.changeTime}
-                />
-              </label>
-            </div>
-
-            <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-              <button onClick={handleSave} disabled={busy}>
-                Save
-              </button>
-              <button onClick={handleDelete} disabled={busy}>
-                Delete
-              </button>
-            </div>
-          </div>
         </div>
-      )}
-    </div>
-  );
+      </div>
+    )}
+  </div>
+);
 }
 
 export default CalendarPage;

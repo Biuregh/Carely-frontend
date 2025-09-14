@@ -13,13 +13,32 @@ function Connected() {
     else localStorage.removeItem("providerId");
   }, [providerId]);
 
-  return (
-    <div style={{ padding: 16 }}>
-      <h2>Schedule Appointments</h2>
-      <ProviderPicker value={providerId} onChange={setProviderId} />
-      <CreateEvent providerId={providerId} />
-      <Agenda providerId={providerId} />
+return (
+  <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="w-full max-w-4xl bg-white shadow rounded-lg p-6 md:p-8">
+      <h2 className="text-2xl font-semibold text-teal-600 mb-4 text-center">
+        Schedule Appointments
+      </h2>
+      <p className="text-gray-600 text-sm mb-6 text-center">
+        Pick a provider, create a new appointment, and review today’s agenda.
+      </p>
+
+      <div className="space-y-6">
+        
+        <div className="bg-white border rounded p-4">
+          <ProviderPicker value={providerId} onChange={setProviderId} />
+        </div>
+
+        <div className="bg-white border rounded p-4">
+          <CreateEvent providerId={providerId} />
+        </div>
+
+        <div className="bg-white border rounded p-4">
+          <Agenda providerId={providerId} />
+        </div>
+      </div>
     </div>
-  );
+  </div>
+);
 }
 export default Connected;

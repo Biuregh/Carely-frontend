@@ -194,134 +194,165 @@ const AppointmentManager = () => {
   }, [filtered]);
 
   return (
-    <main>
-      <h2>Appointment Manager</h2>
+  <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="w-full max-w-4xl bg-white shadow rounded-lg p-6 md:p-8">
+    
+      <h2 className="text-2xl font-semibold text-teal-600 mb-6 text-center">
+        Admin · Users
+      </h2>
 
-      <form
-        onSubmit={onSearch}
-        style={{
-          display: "grid",
-          gap: 8,
-          gridTemplateColumns: "repeat(4, minmax(180px, 1fr))",
-          alignItems: "end",
-        }}
-      >
-        <label style={{ display: "grid", gap: 4 }}>
-          Patient
-          <input
-            value={inputPatient}
-            onChange={(e) => setInputPatient(e.target.value)}
-            placeholder="Type patient name"
-          />
-        </label>
-
-        <label style={{ display: "grid", gap: 4 }}>
-          Provider
-          <select
-            value={inputProviderId}
-            onChange={(e) => setInputProviderId(e.target.value)}
+      <div className="mb-8 rounded border-2 border-gray-300 bg-white p-4">
+        <strong className="text-gray-800">Clinic Google</strong>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            onClick={connectClinic}
+            className="px-4 py-2 rounded bg-teal-600 text-white hover:bg-teal-700 transition-colors"
           >
-            <option value="ALL">All Providers</option>
-            {providers.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label style={{ display: "grid", gap: 4 }}>
-          From
-          <input
-            type="date"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-          />
-        </label>
-
-        <label style={{ display: "grid", gap: 4 }}>
-          To
-          <input
-            type="date"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-          />
-        </label>
-
-        <div style={{ gridColumn: "1 / -1", display: "flex", gap: 8 }}>
-          <button type="submit">Search</button>
-          <button type="button" onClick={load} disabled={loading}>
-            {loading ? "Loading…" : "Refresh"}
-          </button>
-        </div>
-      </form>
-
-      {err && (
-        <div style={{ color: "crimson", marginTop: 8 }}>Error: {err}</div>
-      )}
-
-      <section style={{ marginTop: 16 }}>
-        <div>
-          <span>View: </span>
-          <button onClick={() => setView("list")} disabled={view === "list"}>
-            List
+            Connect
           </button>
           <button
-            onClick={() => setView("calendar")}
-            disabled={view === "calendar"}
+            onClick={async () => {
+              const res = await fetch(`${API}/oauth/google/app/disconnect`, {
+                method: "POST",
+                headers: tokenHeader,
+                credentials: "include",
+              });
+              if (res.ok) setMsg("Clinic Google disconnected");
+            }}
+            className="px-4 py-2 rounded bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors"
           >
-            Calendar
+            Disconnect
           </button>
         </div>
-      </section>
+      </div>
+    
+      <div className="mb-10">
+        <h3 className="text-lg font-semibold text-gray-800 mb-3 text-center">
+          Create User
+        </h3>
 
-      {view === "list" && (
-        <>
-          <h3 style={{ marginTop: 16 }}>
-            Upcoming Appointments ({upcoming.length})
-          </h3>
-          {upcoming.length === 0 && <div>No upcoming appointments.</div>}
-          {upcoming.map((a) => (
-            <AppointmentCard
-              key={a.id}
-              appt={a}
-              onReschedule={onReschedule}
-              onCancel={onCancel}
-            />
-          ))}
-
-          <h3>Past Appointments ({past.length})</h3>
-          {past.length === 0 && <div>No past appointments.</div>}
-          {past.map((a) => (
-            <AppointmentCard
-              key={a.id}
-              appt={a}
-              onReschedule={onReschedule}
-              onCancel={onCancel}
-            />
-          ))}
-        </>
-      )}
-
-      {view === "calendar" && (
-        <div style={{ marginTop: 16 }}>
-          <FullCalendar
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-            initialView="timeGridWeek"
-            headerToolbar={{
-              left: "prev,next today",
-              center: "title",
-              right: "dayGridMonth,timeGridWeek,timeGridDay",
-            }}
-            events={calendarEvents}
-            editable={false}
-            selectable={false}
-            height="auto"
+        <form onSubmit={createUser} className="space-y-4 max-w-lg mx-auto">
+         
+          <input
+            type="email"
+            name="username"
+            value={form.username}
+            onChange={onChange}
+            required
+            placeholder="Email (username)"
+            className="w-full rounded border border-gray-300 px-3 py-2 
+                       focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-        </div>
-      )}
-    </main>
-  );
+
+          <input
+            name="displayName"
+            value={form.displayName}
+            onChange={onChange}
+            placeholder="Display Name (e.g., John Smith, MD)"
+            className="w-full rounded border border-gray-300 px-3 py-2 
+                       focus:outline-none focus:ring-2 focus:ring-teal-500"
+          />
+
+          <input
+            type="password"
+            name="password"
+            value={form.password}
+            onChange={onChange}
+            required
+            placeholder="Password"
+            className="w-full rounded border border-gray-300 px-3 py-2 
+                       focus:outline-none focus:ring-2 focus:ring-teal-500"
+          />
+
+          <select
+            name="role"
+            value={form.role}
+            onChange={onChange}
+            className="w-full rounded border border-gray-300 px-3 py-2 
+                       focus:outline-none focus:ring-2 focus:ring-teal-500"
+          >
+            <option value="provider">provider</option>
+            <option value="reception">reception</option>
+            <option value="admin">admin</option>
+            <option value="patient">patient</option>
+          </select>
+
+          <label className="inline-flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="active"
+              checked={form.active}
+              onChange={onChange}
+              className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+            />
+            <span className="text-sm text-gray-700">Active</span>
+          </label>
+
+          <div className="pt-2">
+            <button
+              type="submit"
+              className="w-full px-4 py-2 rounded bg-teal-600 text-white 
+                         hover:bg-teal-700 transition-colors"
+            >
+              Create User
+            </button>
+          </div>
+        </form>
+
+        {msg && (
+          <p className="mt-3 text-sm text-gray-700 rounded border border-gray-200 bg-gray-50 px-3 py-2 text-center">
+            {msg}
+          </p>
+        )}
+      </div>
+
+      <h3 className="text-lg font-semibold text-gray-800 mb-3 text-center">
+        Providers
+      </h3>
+      <ul className="grid gap-3">
+        {users.map((u) => (
+          <li
+            key={u._id}
+            className="rounded border border-gray-200 p-4 bg-white"
+          >
+            <div className="text-gray-900">
+              <strong>{u.displayName || u.username}</strong> — {u.role} —{" "}
+              <span
+                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ml-1
+                  ${
+                    u.active
+                      ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                      : "bg-red-50 text-red-700 ring-red-200"
+                  }`}
+              >
+                {u.active ? "active" : "inactive"}
+              </span>
+            </div>
+
+            <div className="mt-1 text-xs text-gray-600">
+              Calendar:{" "}
+              {u.calendarId ? (
+                <code className="text-gray-800">{u.calendarId}</code>
+              ) : (
+                <em>(not set)</em>
+              )}
+            </div>
+
+            <div className="mt-3">
+              <button
+                onClick={() => ensureCalendar(u._id)}
+                className="px-3 py-2 rounded border border-teal-600 text-teal-700 bg-white 
+                           hover:bg-teal-50 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors"
+              >
+                Ensure clinic calendar
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+);
 };
 
 export default AppointmentManager;
